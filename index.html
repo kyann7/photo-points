@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTO ARENA | Elite Edition</title>
+    <title>FOTO ARENA | By @WAGH</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -14,10 +14,8 @@
         .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: all 0.3s ease; cursor: pointer; border: none; }
         .btn-gamer:hover { filter: brightness(1.1); transform: scale(1.02); }
         
-        /* Input de Nickname Visível */
         .nick-input { background: #1a1a1a !important; border: 1px solid #333 !important; color: #a855f7 !important; padding: 8px 15px; border-radius: 8px; font-weight: bold; width: 100%; }
         
-        /* Pódio e Coroas Corrigidas */
         .podium-card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-top: 40px; }
         .avatar-frame { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #333; overflow: hidden; background: #222; position: relative; }
         .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
@@ -141,18 +139,26 @@
     </div>
 
     <script>
+        // SISTEMA DE SINCRONIZAÇÃO GLOBAL (Simula Banco de Dados no GitHub)
+        const getGlobalRooms = () => JSON.parse(localStorage.getItem('GLOBAL_ARENAS')) || {};
+        const saveGlobalRoom = (room) => {
+            const rooms = getGlobalRooms();
+            rooms[room.code] = room;
+            localStorage.setItem('GLOBAL_ARENAS', JSON.stringify(rooms));
+        };
+
         let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'Player_1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Player' };
-        let gameState = JSON.parse(localStorage.getItem('arenaSave')) || { active: false };
+        let currentSession = JSON.parse(localStorage.getItem('currentArenaSession')) || null;
         let timerLoop;
 
-        // Iniciar
         document.getElementById('myNickname').value = profile.nick;
         document.getElementById('myAvatarDisplay').src = profile.avatar;
-        if (gameState.active) restoreGame();
+        if (currentSession) restoreGame();
 
         function saveProfile() {
             profile.nick = document.getElementById('myNickname').value;
             localStorage.setItem('userProfile', JSON.stringify(profile));
+            if(currentSession) updateParticipant();
         }
 
         function updateProfileAvatar(event) {
@@ -170,73 +176,91 @@
             const time = document.getElementById('duration').value;
             if(!name || !time) return alert("Preencha nome e tempo!");
 
-            gameState = {
-                active: true,
-                isOwner: true,
-                status: 'running',
+            const newCode = Math.floor(1000 + Math.random() * 9000).toString();
+            const newRoom = {
+                code: newCode,
                 name: name,
-                code: Math.floor(1000 + Math.random() * 9000).toString(), // 4 dígitos
+                duration: time * 60,
                 timeLeft: time * 60,
-                score: 0,
+                status: 'running',
+                adminId: profile.nick,
+                participants: {},
                 photos: []
             };
-            saveAndRun();
+            
+            saveGlobalRoom(newRoom);
+            enterRoom(newCode);
         }
 
         function joinArena() {
             const code = document.getElementById('joinCode').value;
-            if(code.length < 4) return alert("Código de 4 dígitos!");
-            
-            // Simula persistência de sala encerrada se o código bater
-            if(gameState.code === code && gameState.status === 'finished') {
-                restoreGame();
-            } else {
-                gameState = { active: true, isOwner: false, status: 'running', name: "Arena Batalha", code: code, timeLeft: 600, score: 0, photos: [] };
-                saveAndRun();
-            }
+            const rooms = getGlobalRooms();
+            if(!rooms[code]) return alert("Sala não encontrada!");
+            enterRoom(code);
         }
 
-        function saveAndRun() {
-            localStorage.setItem('arenaSave', JSON.stringify(gameState));
+        function enterRoom(code) {
+            const rooms = getGlobalRooms();
+            const room = rooms[code];
+            
+            // Adiciona ou atualiza o jogador na sala global
+            if(!room.participants[profile.nick]) {
+                room.participants[profile.nick] = { score: 0, avatar: profile.avatar };
+            }
+            
+            saveGlobalRoom(room);
+            currentSession = { code: code, isAdmin: room.adminId === profile.nick };
+            localStorage.setItem('currentArenaSession', JSON.stringify(currentSession));
             restoreGame();
         }
 
         function restoreGame() {
+            const rooms = getGlobalRooms();
+            const room = rooms[currentSession.code];
+            if(!room) return leaveArena();
+
             document.getElementById('home').style.display = 'none';
             document.getElementById('profileBar').style.display = 'none';
             document.getElementById('arena').classList.remove('hidden');
-            document.getElementById('activeRoomName').innerText = gameState.name;
-            document.getElementById('activeCode').innerText = gameState.code;
+            document.getElementById('activeRoomName').innerText = room.name;
+            document.getElementById('activeCode').innerText = room.code;
 
-            if (gameState.status === 'finished') {
-                showPodium();
+            if (room.status === 'finished') {
+                showPodium(room);
             } else {
                 document.getElementById('activeContent').classList.remove('hidden');
                 document.getElementById('activeControls').classList.remove('hidden');
                 document.getElementById('podiumScreen').classList.add('hidden');
-                runTimer();
-                renderFeed();
-                updateRanking();
+                startSync(room.code);
             }
         }
 
-        function runTimer() {
+        function startSync(code) {
             if(timerLoop) clearInterval(timerLoop);
             timerLoop = setInterval(() => {
-                if(gameState.timeLeft <= 0) {
-                    clearInterval(timerLoop);
-                    finishArena();
-                    return;
+                const rooms = getGlobalRooms();
+                const room = rooms[code];
+                
+                if(room.status === 'running' && room.adminId === profile.nick) {
+                    room.timeLeft--;
+                    if(room.timeLeft <= 0) room.status = 'finished';
+                    saveGlobalRoom(room);
                 }
-                gameState.timeLeft--;
-                renderTimer();
-                localStorage.setItem('arenaSave', JSON.stringify(gameState));
+
+                if(room.status === 'finished') {
+                    clearInterval(timerLoop);
+                    showPodium(room);
+                } else {
+                    renderTimer(room.timeLeft);
+                    renderFeed(room.photos);
+                    updateRanking(room.participants);
+                }
             }, 1000);
         }
 
-        function renderTimer() {
-            const m = Math.floor(gameState.timeLeft / 60);
-            const s = gameState.timeLeft % 60;
+        function renderTimer(time) {
+            const m = Math.floor(time / 60);
+            const s = time % 60;
             document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
@@ -245,95 +269,96 @@
             if(!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                gameState.photos.unshift(e.target.result);
-                gameState.score += 200;
-                localStorage.setItem('arenaSave', JSON.stringify(gameState));
-                renderFeed();
-                updateRanking();
+                const rooms = getGlobalRooms();
+                const room = rooms[currentSession.code];
+                
+                room.photos.unshift({ src: e.target.result, user: profile.nick });
+                room.participants[profile.nick].score += 200;
+                
+                saveGlobalRoom(room);
             };
             reader.readAsDataURL(file);
         }
 
-        function finishArena() {
-            gameState.status = 'finished';
-            gameState.timeLeft = 0;
-            localStorage.setItem('arenaSave', JSON.stringify(gameState));
-            showPodium();
-        }
-
-        function showPodium() {
+        function showPodium(room) {
             document.getElementById('activeContent').classList.add('hidden');
             document.getElementById('activeControls').classList.add('hidden');
             document.getElementById('podiumScreen').classList.remove('hidden');
             document.getElementById('podiumScreen').classList.add('flex');
 
-            if(gameState.isOwner) document.getElementById('adminControls').classList.remove('hidden');
+            if(currentSession.isAdmin) document.getElementById('adminControls').classList.remove('hidden');
 
-            const winners = [
-                { nick: profile.nick, score: gameState.score, avatar: profile.avatar },
-                { nick: "Player_X", score: 800, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2" },
-                { nick: "Player_Y", score: 400, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=3" }
-            ];
+            const sorted = Object.entries(room.participants)
+                .map(([nick, data]) => ({ nick, ...data }))
+                .sort((a,b) => b.score - a.score);
 
-            // 1º
-            document.getElementById('p1_name').innerText = winners[0].nick;
-            document.getElementById('p1_score').innerText = winners[0].score;
-            document.getElementById('p1_img').src = winners[0].avatar;
-            // 2º
-            document.getElementById('p2_name').innerText = winners[1].nick;
-            document.getElementById('p2_score').innerText = winners[1].score;
-            document.getElementById('p2_img').src = winners[1].avatar;
-            // 3º
-            document.getElementById('p3_name').innerText = winners[2].nick;
-            document.getElementById('p3_score').innerText = winners[2].score;
-            document.getElementById('p3_img').src = winners[2].avatar;
+            const fill = (id, player) => {
+                document.getElementById(`${id}_name`).innerText = player ? player.nick : '---';
+                document.getElementById(`${id}_score`).innerText = player ? player.score : '0';
+                document.getElementById(`${id}_img`).src = player ? player.avatar : 'https://via.placeholder.com/150';
+            };
+
+            fill('p1', sorted[0]);
+            fill('p2', sorted[1]);
+            fill('p3', sorted[2]);
         }
 
         function backToMenu() {
+            clearInterval(timerLoop);
             document.getElementById('arena').classList.add('hidden');
             document.getElementById('home').style.display = 'block';
             document.getElementById('profileBar').style.display = 'flex';
         }
 
         function leaveArena() {
-            if(confirm("Tem certeza que deseja sair desta sala?")) {
-                localStorage.removeItem('arenaSave');
-                location.reload();
-            }
+            localStorage.removeItem('currentArenaSession');
+            location.reload();
         }
 
         function showExtendModal() {
             const newTime = prompt("Quanto tempo deseja prolongar? (Minutos)");
             if(newTime && !isNaN(newTime)) {
-                gameState.status = 'running';
-                gameState.timeLeft = newTime * 60;
-                saveAndRun();
+                const rooms = getGlobalRooms();
+                const room = rooms[currentSession.code];
+                room.status = 'running';
+                room.timeLeft = newTime * 60;
+                saveGlobalRoom(room);
+                location.reload();
             }
         }
 
         function deleteArena() {
-            if(confirm("Apagar sala para todos?")) leaveArena();
+            if(confirm("Apagar sala para todos?")) {
+                const rooms = getGlobalRooms();
+                delete rooms[currentSession.code];
+                localStorage.setItem('GLOBAL_ARENAS', JSON.stringify(rooms));
+                leaveArena();
+            }
         }
 
-        function renderFeed() {
-            document.getElementById('photoFeed').innerHTML = gameState.photos.map(src => `
+        function renderFeed(photos) {
+            document.getElementById('photoFeed').innerHTML = photos.map(p => `
                 <div class="photo-card animate-in zoom-in">
-                    <img src="${src}">
-                    <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400">FEITO POR ${profile.nick}</div>
+                    <img src="${p.src}">
+                    <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400">FEITO POR ${p.user}</div>
                 </div>
             `).join('');
         }
 
-        function updateRanking() {
-            document.getElementById('rankingList').innerHTML = `
-                <li class="p-4 flex justify-between items-center bg-purple-500/10 border-l-4 border-purple-500">
+        function updateRanking(participants) {
+            const sorted = Object.entries(participants)
+                .map(([nick, data]) => ({ nick, ...data }))
+                .sort((a,b) => b.score - a.score);
+
+            document.getElementById('rankingList').innerHTML = sorted.map(p => `
+                <li class="p-4 flex justify-between items-center ${p.nick === profile.nick ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
                     <div class="flex items-center gap-2">
-                        <img src="${profile.avatar}" class="w-6 h-6 rounded-full">
-                        <span class="font-bold text-sm uppercase">${profile.nick}</span>
+                        <img src="${p.avatar}" class="w-6 h-6 rounded-full">
+                        <span class="font-bold text-sm uppercase">${p.nick}</span>
                     </div>
-                    <span class="text-purple-400 font-bold">${gameState.score}</span>
+                    <span class="text-purple-400 font-bold">${p.score}</span>
                 </li>
-            `;
+            `).join('');
         }
     </script>
 </body>
