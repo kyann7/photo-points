@@ -3,43 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FOTO ARENA | By @WAGH</title>
+    <title>PHOTO ARENA | Online Real-Time</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
         body { background-color: #050505; color: #fff; font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
-        
         .neon-container { border: 1px solid #8b5cf6; box-shadow: 0 0 25px rgba(139, 92, 246, 0.3); background-color: #121212; }
         .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: all 0.3s ease; cursor: pointer; border: none; }
         .btn-gamer:hover { filter: brightness(1.1); transform: scale(1.02); }
-        
         .nick-input { background: #1a1a1a !important; border: 1px solid #333 !important; color: #a855f7 !important; padding: 8px 15px; border-radius: 8px; font-weight: bold; width: 100%; }
-        
-        .podium-card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-top: 40px; }
         .avatar-frame { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #333; overflow: hidden; background: #222; position: relative; }
         .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
-        
         .crown-icon { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 20; }
-        
-        .gold-rank { color: #ffd700; filter: drop-shadow(0 0 8px #ffd700); }
-        .silver-rank { color: #c0c0c0; filter: drop-shadow(0 0 5px #c0c0c0); }
-        .bronze-rank { color: #cd7f32; filter: drop-shadow(0 0 5px #cd7f32); }
-
         .photo-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; overflow: hidden; }
-        .photo-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
         input[type="file"] { display: none; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-6">
 
     <div id="profileBar" class="mb-6 bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center gap-4 w-full max-w-[380px]">
-        <label for="avatarInput" class="cursor-pointer flex-shrink-0">
-            <div class="w-14 h-14 rounded-full border-2 border-purple-500 overflow-hidden bg-zinc-800 relative group">
-                <img id="myAvatarDisplay" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Player" alt="Avatar">
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <i class="fas fa-pen text-xs"></i>
-                </div>
+        <label for="avatarInput" class="cursor-pointer">
+            <div class="w-14 h-14 rounded-full border-2 border-purple-500 overflow-hidden bg-zinc-800">
+                <img id="myAvatarDisplay" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Player">
             </div>
             <input type="file" id="avatarInput" accept="image/*" onchange="updateProfileAvatar(event)">
         </label>
@@ -50,19 +38,16 @@
     </div>
 
     <div id="home" class="p-8 rounded-2xl neon-container w-[380px] text-center">
-        <h1 class="text-4xl font-black mb-1 italic tracking-tighter italic">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold">Battle Mode</p>
+        <h1 class="text-4xl font-black mb-1 italic italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold text-center">Competição Online</p>
         
         <div class="space-y-4">
-            <div class="text-left text-[10px] font-bold text-zinc-400 uppercase">Criar Arena</div>
             <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
-            <input id="duration" type="number" placeholder="Minutos" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
+            <input id="duration" type="number" placeholder="Tempo (Minutos)" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
             <button onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm">Iniciar Arena</button>
-            
             <div class="py-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest">ou</div>
-
-            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO 4 DÍGITOS" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono tracking-[0.3em] outline-none">
-            <button onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm hover:bg-zinc-700">Entrar na Batalha</button>
+            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono">
+            <button onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm">Entrar na Batalha</button>
         </div>
     </div>
 
@@ -76,7 +61,6 @@
                     <p class="text-zinc-400 font-mono text-sm">CÓDIGO: <span id="activeCode" class="text-purple-400">0000</span></p>
                 </div>
             </div>
-            
             <div id="activeControls" class="flex items-center gap-6">
                 <div class="text-right border-r border-zinc-800 pr-6">
                     <p class="text-zinc-500 uppercase text-[10px] font-black">Cronômetro</p>
@@ -92,7 +76,7 @@
                     <label for="photoInput" class="btn-gamer px-10 py-4 rounded-xl inline-block cursor-pointer font-black text-sm uppercase">
                         <i class="fas fa-camera mr-2"></i> Publicar Foto (+200 PTS)
                     </label>
-                    <input type="file" id="photoInput" accept="image/*" onchange="validateAndUpload(event)">
+                    <input type="file" id="photoInput" accept="image/*" onchange="uploadPhoto(event)">
                 </div>
                 <div id="photoFeed" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
             </div>
@@ -103,262 +87,182 @@
         </div>
 
         <div id="podiumScreen" class="hidden flex-col items-center bg-zinc-900 p-12 rounded-3xl neon-container">
-            <h2 class="text-3xl font-black uppercase italic mb-16 text-purple-500 tracking-widest text-center">Arena Finalizada</h2>
-            
+            <h2 class="text-3xl font-black uppercase italic mb-16 text-purple-500 text-center">Arena Finalizada</h2>
             <div class="flex items-end justify-center gap-4 md:gap-16 mb-16 w-full max-w-3xl">
-                <div class="podium-card">
-                    <i class="fas fa-crown crown-icon bronze-rank"></i>
-                    <div class="avatar-frame border-[#cd7f32]"><img id="p3_img" src=""></div>
-                    <p id="p3_name" class="font-bold mt-3 text-zinc-400">---</p>
-                    <p id="p3_score" class="text-xl font-black">0</p>
-                </div>
-
-                <div class="podium-card scale-110">
-                    <i class="fas fa-crown crown-icon gold-rank text-4xl"></i>
-                    <div class="avatar-frame border-[#ffd700] w-32 h-32"><img id="p1_img" src=""></div>
-                    <p id="p1_name" class="font-black mt-3 text-yellow-500 text-xl uppercase">---</p>
-                    <p id="p1_score" class="text-4xl font-black text-white">0</p>
-                </div>
-
-                <div class="podium-card">
-                    <i class="fas fa-crown crown-icon silver-rank"></i>
-                    <div class="avatar-frame border-[#c0c0c0] w-24 h-24"><img id="p2_img" src=""></div>
-                    <p id="p2_name" class="font-bold mt-3 text-zinc-300">---</p>
-                    <p id="p2_score" class="text-xl font-black">0</p>
-                </div>
+                <div class="podium-card"><i class="fas fa-crown crown-icon text-[#cd7f32]"></i><div class="avatar-frame border-[#cd7f32]"><img id="p3_img"></div><p id="p3_name" class="font-bold mt-2">---</p><p id="p3_score">0</p></div>
+                <div class="podium-card scale-110"><i class="fas fa-crown crown-icon text-[#ffd700] text-4xl"></i><div class="avatar-frame border-[#ffd700] w-32 h-32"><img id="p1_img"></div><p id="p1_name" class="font-black text-yellow-500">---</p><p id="p1_score" class="text-3xl font-black">0</p></div>
+                <div class="podium-card"><i class="fas fa-crown crown-icon text-[#c0c0c0]"></i><div class="avatar-frame border-[#c0c0c0] w-24 h-24"><img id="p2_img"></div><p id="p2_name" class="font-bold mt-2 text-zinc-300">---</p><p id="p2_score">0</p></div>
             </div>
-
-            <div class="flex flex-wrap gap-4 justify-center">
-                <button onclick="leaveArena()" class="px-8 py-3 bg-zinc-800 rounded-xl font-bold uppercase text-xs">Sair da Arena</button>
-                <div id="adminControls" class="hidden flex gap-4">
-                    <button onclick="showExtendModal()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase text-xs text-white">Prolongar Tempo</button>
-                    <button onclick="deleteArena()" class="px-8 py-3 bg-red-600 rounded-xl font-bold uppercase text-xs text-white">Apagar Sala</button>
-                </div>
+            <div id="adminControls" class="hidden flex gap-4">
+                <button onclick="extendTime()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase text-xs text-white">Prolongar</button>
+                <button onclick="leaveArena()" class="px-8 py-3 bg-red-600 rounded-xl font-bold uppercase text-xs text-white">Apagar Sala</button>
             </div>
         </div>
     </div>
 
     <script>
-        // SISTEMA DE SINCRONIZAÇÃO GLOBAL (Simula Banco de Dados no GitHub)
-        const getGlobalRooms = () => JSON.parse(localStorage.getItem('GLOBAL_ARENAS')) || {};
-        const saveGlobalRoom = (room) => {
-            const rooms = getGlobalRooms();
-            rooms[room.code] = room;
-            localStorage.setItem('GLOBAL_ARENAS', JSON.stringify(rooms));
+        // CONFIGURAÇÃO DO FIREBASE (Banco de Dados em Tempo Real Gratuito)
+        const firebaseConfig = {
+            databaseURL: "https://arena-photo-default-rtdb.firebaseio.com/" // Banco público temporário para seu teste
         };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'Player_1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Player' };
-        let currentSession = JSON.parse(localStorage.getItem('currentArenaSession')) || null;
-        let timerLoop;
+        let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'User'+Math.floor(Math.random()*999), avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1' };
+        let currentRoom = null;
+        let isOwner = false;
 
         document.getElementById('myNickname').value = profile.nick;
         document.getElementById('myAvatarDisplay').src = profile.avatar;
-        if (currentSession) restoreGame();
-
-        function saveProfile() {
-            profile.nick = document.getElementById('myNickname').value;
-            localStorage.setItem('userProfile', JSON.stringify(profile));
-            if(currentSession) updateParticipant();
-        }
-
-        function updateProfileAvatar(event) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                profile.avatar = e.target.result;
-                document.getElementById('myAvatarDisplay').src = e.target.result;
-                saveProfile();
-            };
-            reader.readAsDataURL(event.target.files[0]);
-        }
 
         function createArena() {
             const name = document.getElementById('roomName').value;
             const time = document.getElementById('duration').value;
-            if(!name || !time) return alert("Preencha nome e tempo!");
+            if(!name || !time) return alert("Preencha tudo!");
 
-            const newCode = Math.floor(1000 + Math.random() * 9000).toString();
-            const newRoom = {
-                code: newCode,
+            const code = Math.floor(1000 + Math.random() * 9000).toString();
+            isOwner = true;
+            
+            const roomData = {
                 name: name,
-                duration: time * 60,
                 timeLeft: time * 60,
                 status: 'running',
-                adminId: profile.nick,
-                participants: {},
-                photos: []
+                owner: profile.nick,
+                photos: [],
+                participants: {}
             };
-            
-            saveGlobalRoom(newRoom);
-            enterRoom(newCode);
+
+            db.ref('rooms/' + code).set(roomData).then(() => {
+                enterRoom(code);
+                startGlobalTimer(code);
+            });
         }
 
         function joinArena() {
             const code = document.getElementById('joinCode').value;
-            const rooms = getGlobalRooms();
-            if(!rooms[code]) return alert("Sala não encontrada!");
-            enterRoom(code);
+            db.ref('rooms/' + code).once('value', snapshot => {
+                if(snapshot.exists()) {
+                    enterRoom(code);
+                } else {
+                    alert("Código não encontrado!");
+                }
+            });
         }
 
         function enterRoom(code) {
-            const rooms = getGlobalRooms();
-            const room = rooms[code];
-            
-            // Adiciona ou atualiza o jogador na sala global
-            if(!room.participants[profile.nick]) {
-                room.participants[profile.nick] = { score: 0, avatar: profile.avatar };
-            }
-            
-            saveGlobalRoom(room);
-            currentSession = { code: code, isAdmin: room.adminId === profile.nick };
-            localStorage.setItem('currentArenaSession', JSON.stringify(currentSession));
-            restoreGame();
-        }
-
-        function restoreGame() {
-            const rooms = getGlobalRooms();
-            const room = rooms[currentSession.code];
-            if(!room) return leaveArena();
-
+            currentRoom = code;
             document.getElementById('home').style.display = 'none';
             document.getElementById('profileBar').style.display = 'none';
             document.getElementById('arena').classList.remove('hidden');
-            document.getElementById('activeRoomName').innerText = room.name;
-            document.getElementById('activeCode').innerText = room.code;
+            document.getElementById('activeCode').innerText = code;
 
-            if (room.status === 'finished') {
-                showPodium(room);
-            } else {
-                document.getElementById('activeContent').classList.remove('hidden');
-                document.getElementById('activeControls').classList.remove('hidden');
-                document.getElementById('podiumScreen').classList.add('hidden');
-                startSync(room.code);
-            }
-        }
+            // Registrar participante
+            db.ref('rooms/' + code + '/participants/' + profile.nick.replace(/\./g, '_')).set({
+                score: 0,
+                avatar: profile.avatar
+            });
 
-        function startSync(code) {
-            if(timerLoop) clearInterval(timerLoop);
-            timerLoop = setInterval(() => {
-                const rooms = getGlobalRooms();
-                const room = rooms[code];
+            // Ouvir mudanças na sala em tempo real
+            db.ref('rooms/' + code).on('value', snapshot => {
+                const data = snapshot.val();
+                if(!data) return;
+
+                document.getElementById('activeRoomName').innerText = data.name;
+                updateUI(data);
                 
-                if(room.status === 'running' && room.adminId === profile.nick) {
-                    room.timeLeft--;
-                    if(room.timeLeft <= 0) room.status = 'finished';
-                    saveGlobalRoom(room);
+                if(data.status === 'finished') {
+                    showPodium(data);
                 }
-
-                if(room.status === 'finished') {
-                    clearInterval(timerLoop);
-                    showPodium(room);
-                } else {
-                    renderTimer(room.timeLeft);
-                    renderFeed(room.photos);
-                    updateRanking(room.participants);
-                }
-            }, 1000);
+            });
         }
 
-        function renderTimer(time) {
-            const m = Math.floor(time / 60);
-            const s = time % 60;
+        function updateUI(data) {
+            // Timer
+            const m = Math.floor(data.timeLeft / 60);
+            const s = data.timeLeft % 60;
             document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
 
-        function validateAndUpload(event) {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const rooms = getGlobalRooms();
-                const room = rooms[currentSession.code];
-                
-                room.photos.unshift({ src: e.target.result, user: profile.nick });
-                room.participants[profile.nick].score += 200;
-                
-                saveGlobalRoom(room);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function showPodium(room) {
-            document.getElementById('activeContent').classList.add('hidden');
-            document.getElementById('activeControls').classList.add('hidden');
-            document.getElementById('podiumScreen').classList.remove('hidden');
-            document.getElementById('podiumScreen').classList.add('flex');
-
-            if(currentSession.isAdmin) document.getElementById('adminControls').classList.remove('hidden');
-
-            const sorted = Object.entries(room.participants)
-                .map(([nick, data]) => ({ nick, ...data }))
-                .sort((a,b) => b.score - a.score);
-
-            const fill = (id, player) => {
-                document.getElementById(`${id}_name`).innerText = player ? player.nick : '---';
-                document.getElementById(`${id}_score`).innerText = player ? player.score : '0';
-                document.getElementById(`${id}_img`).src = player ? player.avatar : 'https://via.placeholder.com/150';
-            };
-
-            fill('p1', sorted[0]);
-            fill('p2', sorted[1]);
-            fill('p3', sorted[2]);
-        }
-
-        function backToMenu() {
-            clearInterval(timerLoop);
-            document.getElementById('arena').classList.add('hidden');
-            document.getElementById('home').style.display = 'block';
-            document.getElementById('profileBar').style.display = 'flex';
-        }
-
-        function leaveArena() {
-            localStorage.removeItem('currentArenaSession');
-            location.reload();
-        }
-
-        function showExtendModal() {
-            const newTime = prompt("Quanto tempo deseja prolongar? (Minutos)");
-            if(newTime && !isNaN(newTime)) {
-                const rooms = getGlobalRooms();
-                const room = rooms[currentSession.code];
-                room.status = 'running';
-                room.timeLeft = newTime * 60;
-                saveGlobalRoom(room);
-                location.reload();
-            }
-        }
-
-        function deleteArena() {
-            if(confirm("Apagar sala para todos?")) {
-                const rooms = getGlobalRooms();
-                delete rooms[currentSession.code];
-                localStorage.setItem('GLOBAL_ARENAS', JSON.stringify(rooms));
-                leaveArena();
-            }
-        }
-
-        function renderFeed(photos) {
-            document.getElementById('photoFeed').innerHTML = photos.map(p => `
+            // Feed
+            const feed = document.getElementById('photoFeed');
+            const photosArr = data.photos ? Object.values(data.photos).reverse() : [];
+            feed.innerHTML = photosArr.map(p => `
                 <div class="photo-card animate-in zoom-in">
-                    <img src="${p.src}">
-                    <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400">FEITO POR ${p.user}</div>
+                    <img src="${p.src}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+                    <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400 uppercase">${p.user}</div>
                 </div>
             `).join('');
-        }
 
-        function updateRanking(participants) {
-            const sorted = Object.entries(participants)
-                .map(([nick, data]) => ({ nick, ...data }))
-                .sort((a,b) => b.score - a.score);
-
-            document.getElementById('rankingList').innerHTML = sorted.map(p => `
-                <li class="p-4 flex justify-between items-center ${p.nick === profile.nick ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
+            // Ranking
+            const participants = data.participants ? Object.entries(data.participants) : [];
+            const sorted = participants.sort((a,b) => b[1].score - a[1].score);
+            document.getElementById('rankingList').innerHTML = sorted.map(([nick, p]) => `
+                <li class="p-4 flex justify-between items-center ${nick === profile.nick ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
                     <div class="flex items-center gap-2">
                         <img src="${p.avatar}" class="w-6 h-6 rounded-full">
-                        <span class="font-bold text-sm uppercase">${p.nick}</span>
+                        <span class="font-bold text-sm uppercase">${nick}</span>
                     </div>
                     <span class="text-purple-400 font-bold">${p.score}</span>
                 </li>
             `).join('');
+        }
+
+        function uploadPhoto(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const photoData = { src: e.target.result, user: profile.nick };
+                db.ref('rooms/' + currentRoom + '/photos').push(photoData);
+                
+                // Incrementar score
+                const userRef = db.ref('rooms/' + currentRoom + '/participants/' + profile.nick.replace(/\./g, '_') + '/score');
+                userRef.transaction(currentScore => (currentScore || 0) + 200);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function startGlobalTimer(code) {
+            const timer = setInterval(() => {
+                const roomRef = db.ref('rooms/' + code);
+                roomRef.child('timeLeft').transaction(t => {
+                    if(t <= 0) {
+                        roomRef.update({ status: 'finished' });
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    return t - 1;
+                });
+            }, 1000);
+        }
+
+        function showPodium(data) {
+            document.getElementById('activeContent').classList.add('hidden');
+            document.getElementById('activeControls').classList.add('hidden');
+            document.getElementById('podiumScreen').classList.remove('hidden');
+            document.getElementById('podiumScreen').classList.add('flex');
+            if(isOwner) document.getElementById('adminControls').classList.remove('hidden');
+
+            const sorted = Object.entries(data.participants).sort((a,b) => b[1].score - a[1].score);
+            const fill = (id, p) => {
+                if(p) {
+                    document.getElementById(id+'_name').innerText = p[0];
+                    document.getElementById(id+'_score').innerText = p[1].score;
+                    document.getElementById(id+'_img').src = p[1].avatar;
+                }
+            };
+            fill('p1', sorted[0]); fill('p2', sorted[1]); fill('p3', sorted[2]);
+        }
+
+        function leaveArena() {
+            db.ref('rooms/' + currentRoom).remove();
+            location.reload();
+        }
+
+        function backToMenu() { location.reload(); }
+        function saveProfile() { profile.nick = document.getElementById('myNickname').value; localStorage.setItem('userProfile', JSON.stringify(profile)); }
+        function updateProfileAvatar(e) {
+            const r = new FileReader();
+            r.onload = (ev) => { profile.avatar = ev.target.result; document.getElementById('myAvatarDisplay').src = ev.target.result; saveProfile(); };
+            r.readAsDataURL(e.target.files[0]);
         }
     </script>
 </body>
