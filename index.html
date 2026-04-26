@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTO ARENA | Oficial Full</title>
+    <title>PHOTO ARENA | Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -18,6 +18,9 @@
         .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
         .crown-icon { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 20; }
         input[type="file"] { display: none; }
+        .photo-card { position: relative; transition: 0.3s; }
+        .like-btn { position: absolute; bottom: 35px; right: 10px; background: rgba(0,0,0,0.7); border-radius: 20px; padding: 4px 10px; cursor: pointer; border: 1px solid #ff4b2b; color: #ff4b2b; font-size: 12px; font-weight: bold; }
+        .like-btn.active { background: #ff4b2b; color: white; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-6">
@@ -36,39 +39,45 @@
     </div>
 
     <div id="homeScreen" class="p-8 rounded-2xl neon-container w-[380px] text-center">
-        <h1 class="text-4xl font-black mb-1 italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold text-center">Competição em Tempo Real</p>
+        <h1 class="text-4xl font-black mb-1 italic tracking-tighter italic">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold">Battle Mode</p>
         
         <div class="space-y-4">
-            <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
-            <input id="duration" type="number" placeholder="Tempo (Minutos)" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
+            <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none text-white">
+            <div class="flex gap-2">
+                <input id="duration" type="number" placeholder="Minutos" class="w-1/2 p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none text-white">
+                <input id="photoLimit" type="number" value="3" placeholder="Limite Fotos" class="w-1/2 p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none text-white">
+            </div>
             <button onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm">Iniciar Arena</button>
             <div class="py-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest">ou</div>
-            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono">
-            <button onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm">Entrar na Batalha</button>
+            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono text-white">
+            <button onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm hover:bg-zinc-700">Entrar na Batalha</button>
         </div>
     </div>
 
     <div id="arenaScreen" class="hidden w-full max-w-5xl">
         <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-zinc-900 p-6 rounded-2xl neon-container gap-4">
             <div class="flex items-center gap-4">
-                <button onclick="location.reload()" class="text-zinc-500 hover:text-white mr-2"><i class="fas fa-chevron-left text-xl"></i></button>
                 <div class="bg-purple-600 p-3 rounded-lg"><i class="fas fa-bolt text-2xl"></i></div>
                 <div>
                     <h2 id="activeRoomName" class="text-2xl font-black uppercase italic leading-none">---</h2>
                     <p class="text-zinc-400 font-mono text-sm uppercase">CÓDIGO: <span id="activeCode" class="text-purple-400">0000</span></p>
                 </div>
             </div>
-            <div class="text-right border-r border-zinc-800 pr-6">
-                <p class="text-zinc-500 uppercase text-[10px] font-black">Cronômetro</p>
-                <p id="timerDisplay" class="text-4xl font-mono font-black text-white">00:00</p>
+            <div class="flex items-center gap-6">
+                <div class="text-right border-r border-zinc-800 pr-6">
+                    <p class="text-zinc-500 uppercase text-[10px] font-black">Cronômetro</p>
+                    <p id="timerDisplay" class="text-4xl font-mono font-black text-white">00:00</p>
+                </div>
+                <button onclick="abandonArena()" class="bg-red-900/20 text-red-500 border border-red-900/50 px-4 py-2 rounded-lg text-xs font-black uppercase">Abandonar</button>
             </div>
         </div>
 
         <div id="activeArenaContent" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div class="lg:col-span-3 space-y-6">
                 <div class="bg-zinc-900/50 p-10 rounded-3xl border-2 border-dashed border-zinc-800 text-center">
-                    <label for="photoInput" class="btn-gamer px-10 py-4 rounded-xl inline-block cursor-pointer font-black text-sm uppercase">
+                    <p id="limitCounter" class="mb-4 text-[10px] uppercase font-bold text-zinc-500"></p>
+                    <label id="uploadLabel" for="photoInput" class="btn-gamer px-10 py-4 rounded-xl inline-block cursor-pointer font-black text-sm uppercase">
                         <i class="fas fa-camera mr-2"></i> Publicar Foto (+200 PTS)
                     </label>
                     <input type="file" id="photoInput" accept="image/*" onchange="uploadPhoto(this)">
@@ -81,12 +90,12 @@
             </div>
         </div>
 
-        <div id="podiumScreen" class="hidden flex-col items-center bg-zinc-900 p-12 rounded-3xl neon-container animate-in zoom-in">
+        <div id="podiumScreen" class="hidden flex-col items-center bg-zinc-900 p-12 rounded-3xl neon-container">
             <h2 class="text-3xl font-black uppercase italic mb-16 text-purple-500 text-center">Arena Finalizada</h2>
             <div class="flex items-end justify-center gap-4 md:gap-16 mb-16 w-full max-w-3xl">
-                <div class="text-center"><i class="fas fa-crown crown-icon text-[#cd7f32]"></i><div class="avatar-frame border-[#cd7f32]"><img id="p3_img"></div><p id="p3_name" class="font-bold mt-2">---</p></div>
-                <div class="text-center scale-125"><i class="fas fa-crown crown-icon text-[#ffd700] text-4xl"></i><div class="avatar-frame border-[#ffd700] w-24 h-24"><img id="p1_img"></div><p id="p1_name" class="font-black text-yellow-500">---</p></div>
-                <div class="text-center"><i class="fas fa-crown crown-icon text-[#c0c0c0]"></i><div class="avatar-frame border-[#c0c0c0]"><img id="p2_img"></div><p id="p2_name" class="font-bold mt-2 text-zinc-300">---</p></div>
+                <div class="text-center"><i class="fas fa-crown crown-icon text-[#cd7f32]"></i><div class="avatar-frame border-[#cd7f32]"><img id="p3_img"></div><p id="p3_name" class="font-bold mt-2">---</p><p id="p3_score" class="text-purple-400 font-black">0</p></div>
+                <div class="text-center scale-125"><i class="fas fa-crown crown-icon text-[#ffd700] text-4xl"></i><div class="avatar-frame border-[#ffd700] w-24 h-24"><img id="p1_img"></div><p id="p1_name" class="font-black text-yellow-500">---</p><p id="p1_score" class="text-white font-black">0</p></div>
+                <div class="text-center"><i class="fas fa-crown crown-icon text-[#c0c0c0]"></i><div class="avatar-frame border-[#c0c0c0]"><img id="p2_img"></div><p id="p2_name" class="font-bold mt-2 text-zinc-300">---</p><p id="p2_score" class="text-purple-400 font-black">0</p></div>
             </div>
             <button onclick="location.reload()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase">Voltar ao Menu</button>
         </div>
@@ -97,21 +106,25 @@
         let conn;
         let connections = [];
         let isOwner = false;
+        let myPhotosCount = 0;
         let gameState = { 
             name: "", 
             timeLeft: 0, 
+            limit: 3,
             players: {}, 
             photos: [], 
             status: "running" 
         };
 
-        // Carregar Perfil do LocalStorage
         let myProfile = JSON.parse(localStorage.getItem('arena_profile')) || {
             nick: "Player_" + Math.floor(Math.random()*999),
             avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + Math.random()
         };
-        document.getElementById('myNickname').value = myProfile.nick;
-        document.getElementById('myAvatarDisplay').src = myProfile.avatar;
+
+        window.onload = () => {
+            document.getElementById('myNickname').value = myProfile.nick;
+            document.getElementById('myAvatarDisplay').src = myProfile.avatar;
+        };
 
         function saveProfile() {
             myProfile.nick = document.getElementById('myNickname').value;
@@ -128,25 +141,24 @@
             r.readAsDataURL(e.target.files[0]);
         }
 
-        // --- LÓGICA DE CONEXÃO ---
-
         function createArena() {
             const name = document.getElementById('roomName').value;
             const time = document.getElementById('duration').value;
-            if(!name || !time) return alert("Preencha tudo!");
+            const limit = document.getElementById('photoLimit').value;
+            if(!name || !time) return alert("Preencha os campos!");
 
             const code = Math.floor(1000 + Math.random() * 9000).toString();
             isOwner = true;
             gameState.name = name;
             gameState.timeLeft = time * 60;
-            gameState.players[myProfile.nick] = { score: 0, avatar: myProfile.avatar };
+            gameState.limit = parseInt(limit);
+            gameState.players[myProfile.nick] = { score: 0, avatar: myProfile.avatar, likesGiven: [] };
 
             peer = new Peer('ARENA-' + code);
             peer.on('open', () => {
                 showArena(code);
                 startTimer();
             });
-
             peer.on('connection', (c) => {
                 connections.push(c);
                 c.on('data', (data) => handleData(data, c));
@@ -155,8 +167,7 @@
 
         function joinArena() {
             const code = document.getElementById('joinCode').value;
-            if(!code) return alert("Digite o código!");
-
+            if(!code) return alert("Código?");
             peer = new Peer();
             peer.on('open', () => {
                 conn = peer.connect('ARENA-' + code);
@@ -170,7 +181,9 @@
 
         function handleData(data, senderConn) {
             if(data.type === 'JOIN') {
-                gameState.players[data.profile.nick] = { score: 0, avatar: data.profile.avatar };
+                if(!gameState.players[data.profile.nick]) {
+                    gameState.players[data.profile.nick] = { score: 0, avatar: data.profile.avatar, likesGiven: [] };
+                }
                 broadcastState();
             }
             if(data.type === 'SYNC') {
@@ -180,22 +193,38 @@
             if(data.type === 'FOTO') {
                 gameState.photos.unshift(data.photo);
                 gameState.players[data.nick].score += 200;
-                if(isOwner) broadcastState();
+                broadcastState();
+            }
+            if(data.type === 'LIKE') {
+                const photo = gameState.photos.find(p => p.id === data.photoId);
+                if(photo) {
+                    photo.likes++;
+                    gameState.players[photo.user].score += 50;
+                    gameState.players[data.fromNick].likesGiven.push(data.photoId);
+                    broadcastState();
+                }
             }
         }
 
         function broadcastState() {
             if(!isOwner) return;
-            const msg = { type: 'SYNC', state: gameState };
-            connections.forEach(c => c.send(msg));
+            connections.forEach(c => c.send({ type: 'SYNC', state: gameState }));
             renderArena();
         }
 
         function uploadPhoto(input) {
+            if (myPhotosCount >= gameState.limit) return alert("Limite de fotos atingido!");
             if (!input.files[0]) return;
+
             const reader = new FileReader();
             reader.onload = (e) => {
-                const photoObj = { src: e.target.result, user: myProfile.nick };
+                const photoObj = { 
+                    id: Date.now() + Math.random(), 
+                    src: e.target.result, 
+                    user: myProfile.nick, 
+                    likes: 0 
+                };
+                myPhotosCount++;
                 if(isOwner) {
                     gameState.photos.unshift(photoObj);
                     gameState.players[myProfile.nick].score += 200;
@@ -207,7 +236,80 @@
             reader.readAsDataURL(input.files[0]);
         }
 
-        // --- INTERFACE E TEMPO ---
+        function darLike(photoId) {
+            const me = gameState.players[myProfile.nick];
+            if(me.likesGiven && me.likesGiven.includes(photoId)) return;
+
+            if(isOwner) {
+                const photo = gameState.photos.find(p => p.id === photoId);
+                photo.likes++;
+                gameState.players[photo.user].score += 50;
+                me.likesGiven.push(photoId);
+                broadcastState();
+            } else {
+                conn.send({ type: 'LIKE', photoId: photoId, fromNick: myProfile.nick });
+            }
+        }
+
+        function renderArena() {
+            document.getElementById('activeRoomName').innerText = gameState.name;
+            const m = Math.floor(gameState.timeLeft / 60);
+            const s = gameState.timeLeft % 60;
+            document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+
+            // Ranking
+            const sorted = Object.entries(gameState.players).sort((a,b) => b[1].score - a[1].score);
+            document.getElementById('rankingList').innerHTML = sorted.map(([nick, data]) => `
+                <li class="p-4 flex justify-between items-center ${nick === myProfile.nick ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
+                    <div class="flex items-center gap-2">
+                        <img src="${data.avatar}" class="w-6 h-6 rounded-full">
+                        <span class="font-bold text-sm uppercase">${nick}</span>
+                    </div>
+                    <span class="text-purple-400 font-black">${data.score}</span>
+                </li>
+            `).join('');
+
+            // Feed de Fotos
+            document.getElementById('photoFeed').innerHTML = gameState.photos.map(p => {
+                const alreadyLiked = gameState.players[myProfile.nick]?.likesGiven?.includes(p.id);
+                return `
+                <div class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 photo-card">
+                    <img src="${p.src}" class="w-full aspect-square object-cover">
+                    <div onclick="darLike(${p.id})" class="like-btn ${alreadyLiked ? 'active' : ''}">
+                        <i class="fas fa-heart"></i> ${p.likes}
+                    </div>
+                    <p class="text-[10px] p-2 text-center text-purple-400 font-bold uppercase">${p.user}</p>
+                </div>
+            `}).join('');
+
+            // Limite
+            document.getElementById('limitCounter').innerText = `Fotos: ${myPhotosCount} / ${gameState.limit}`;
+            if(myPhotosCount >= gameState.limit) {
+                document.getElementById('uploadLabel').classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Pódio
+            if(gameState.status === "finished") {
+                document.getElementById('activeArenaContent').classList.add('hidden');
+                document.getElementById('podiumScreen').classList.remove('hidden');
+                document.getElementById('podiumScreen').classList.add('flex');
+                if(sorted[0]) { 
+                    document.getElementById('p1_name').innerText = sorted[0][0]; 
+                    document.getElementById('p1_img').src = sorted[0][1].avatar; 
+                    document.getElementById('p1_score').innerText = sorted[0][1].score + " PTS";
+                }
+                if(sorted[1]) { 
+                    document.getElementById('p2_name').innerText = sorted[1][0]; 
+                    document.getElementById('p2_img').src = sorted[1][1].avatar; 
+                    document.getElementById('p2_score').innerText = sorted[1][1].score + " PTS";
+                }
+                if(sorted[2]) { 
+                    document.getElementById('p3_name').innerText = sorted[2][0]; 
+                    document.getElementById('p3_img').src = sorted[2][1].avatar; 
+                    document.getElementById('p3_score').innerText = sorted[2][1].score + " PTS";
+                }
+            }
+        }
 
         function showArena(code) {
             document.getElementById('profileBar').style.display = 'none';
@@ -228,44 +330,9 @@
             }, 1000);
         }
 
-        function renderArena() {
-            document.getElementById('activeRoomName').innerText = gameState.name;
-            
-            // Timer
-            const m = Math.floor(gameState.timeLeft / 60);
-            const s = gameState.timeLeft % 60;
-            document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-
-            // Ranking
-            const ranking = document.getElementById('rankingList');
-            const sorted = Object.entries(gameState.players).sort((a,b) => b[1].score - a[1].score);
-            ranking.innerHTML = sorted.map(([nick, data]) => `
-                <li class="p-4 flex justify-between items-center ${nick === myProfile.nick ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
-                    <div class="flex items-center gap-2">
-                        <img src="${data.avatar}" class="w-6 h-6 rounded-full">
-                        <span class="font-bold text-sm uppercase">${nick}</span>
-                    </div>
-                    <span class="text-purple-400 font-bold">${data.score}</span>
-                </li>
-            `).join('');
-
-            // Fotos
-            document.getElementById('photoFeed').innerHTML = gameState.photos.map(p => `
-                <div class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800">
-                    <img src="${p.src}" class="w-full aspect-square object-cover">
-                    <p class="text-[10px] p-2 text-center text-purple-400 font-bold">${p.user}</p>
-                </div>
-            `).join('');
-
-            // Pódio
-            if(gameState.status === "finished") {
-                document.getElementById('activeArenaContent').classList.add('hidden');
-                document.getElementById('podiumScreen').classList.remove('hidden');
-                document.getElementById('podiumScreen').classList.add('flex');
-                
-                if(sorted[0]) { document.getElementById('p1_name').innerText = sorted[0][0]; document.getElementById('p1_img').src = sorted[0][1].avatar; }
-                if(sorted[1]) { document.getElementById('p2_name').innerText = sorted[1][0]; document.getElementById('p2_img').src = sorted[1][1].avatar; }
-                if(sorted[2]) { document.getElementById('p3_name').innerText = sorted[2][0]; document.getElementById('p3_img').src = sorted[2][1].avatar; }
+        function abandonArena() {
+            if(confirm("Deseja mesmo sair da arena?")) {
+                location.reload();
             }
         }
     </script>
