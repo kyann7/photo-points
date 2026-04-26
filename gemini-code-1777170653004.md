@@ -1,0 +1,16 @@
+# 📸 Photo Battle Arena
+
+Um sistema de gamificação em tempo real onde usuários criam salas privadas para competir por pontos através de fotos.
+
+## ✨ Funcionalidades
+- Criar sala com nome e tempo personalizado.
+- Código único de 5 dígitos para entrada.
+- Sistema de pontuação (+200 por foto).
+- Leaderboard em tempo real via Socket.io.
+- Design Gamer Dark Mode.
+
+## 🚀 Como rodar
+1. Clone o repositório.
+2. Execute `npm install`.
+3. Execute `npm start`.
+4. Acesse `localhost:3000`.
