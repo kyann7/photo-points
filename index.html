@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHOTO ARENA | Pro Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { background-color: #0a0a0a; color: #fff; font-family: 'Segoe UI', sans-serif; }
+        .neon-border { border: 2px solid #8b5cf6; box-shadow: 0 0 15px #8b5cf6; }
+        .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: 0.3s; }
+        .btn-gamer:hover { transform: scale(1.05); filter: brightness(1.2); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="home" class="p-8 bg-zinc-900 rounded-xl neon-border w-96 text-center">
+        <h1 class="text-3xl font-black mb-6 italic">PHOTO <span class="text-purple-500">ARENA</span></h1>
+        
+        <div class="space-y-4">
+            <input id="roomName" type="text" placeholder="Nome da Sala" class="w-full p-3 bg-zinc-800 rounded border border-zinc-700 outline-none focus:border-purple-500">
+            <input id="duration" type="number" placeholder="Tempo (minutos)" class="w-full p-3 bg-zinc-800 rounded border border-zinc-700 outline-none">
+            <button onclick="createRoom()" class="w-full p-3 btn-gamer rounded font-bold uppercase">Criar Arena</button>
+            
+            <div class="border-t border-zinc-700 my-4 pt-4">
+                <input id="joinCode" type="text" placeholder="Código de 5 dígitos" class="w-full p-3 bg-zinc-800 rounded border border-zinc-700 mb-2">
+                <button onclick="joinRoom()" class="w-full p-3 bg-zinc-700 hover:bg-zinc-600 rounded font-bold uppercase">Entrar na Batalha</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="arena" class="hidden w-full max-w-4xl p-6">
+        <div class="flex justify-between items-center mb-8 bg-zinc-900 p-4 rounded neon-border">
+            <div>
+                <h2 id="displayRoomName" class="text-2xl font-bold">Arena: ---</h2>
+                <p>Código: <span id="displayCode" class="text-purple-400 font-mono">00000</span></p>
+            </div>
+            <div class="text-right">
+                <p class="text-zinc-400 uppercase text-xs">Tempo Restante</p>
+                <p id="timer" class="text-3xl font-mono text-red-500">00:00</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+            <div class="col-span-2 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                <div class="mb-4 h-64 border-2 border-dashed border-zinc-700 flex items-center justify-center rounded">
+                    <button onclick="sendPhoto()" class="btn-gamer px-6 py-2 rounded-full font-bold">SUBIR FOTO (+200 PTS)</button>
+                </div>
+            </div>
+            <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                <h3 class="font-bold border-b border-zinc-700 pb-2 mb-4 uppercase">Ranking</h3>
+                <ul id="leaderboard" class="space-y-2"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentRoom = '';
+
+        function createRoom() {
+            const name = document.getElementById('roomName').value;
+            const time = document.getElementById('duration').value;
+            if(name && time) socket.emit('createRoom', { roomName: name, duration: time });
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('joinCode').value;
+            if(code) socket.emit('joinRoom', code);
+        }
+
+        function sendPhoto() {
+            socket.emit('sendPhoto', currentRoom);
+        }
+
+        socket.on('roomCreated', (code) => {
+            currentRoom = code;
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('arena').classList.remove('hidden');
+            document.getElementById('displayCode').innerText = code;
+        });
+
+        socket.on('joinedSuccess', (code) => {
+            currentRoom = code;
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('arena').classList.remove('hidden');
+            document.getElementById('displayCode').innerText = code;
+        });
+
+        socket.on('timerUpdate', (seconds) => {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        });
+
+        socket.on('updateLeaderboard', (players) => {
+            const list = document.getElementById('leaderboard');
+            list.innerHTML = Object.values(players)
+                .sort((a,b) => b.points - a.points)
+                .map((p, index) => `<li class="flex justify-between p-2 ${index === 0 ? 'bg-purple-900/30 text-purple-400' : ''}">
+                    <span>#${index+1} User...${p.id.slice(0,4)}</span>
+                    <span class="font-bold">${p.points}</span>
+                </li>`).join('');
+        });
+
+        socket.on('gameOver', (players) => {
+            alert('FIM DE JOGO! Verifique o ranking final.');
+        });
+    </script>
+</body>
+</html>
