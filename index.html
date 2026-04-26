@@ -39,7 +39,7 @@
     </div>
 
     <div id="homeScreen" class="p-8 rounded-2xl neon-container w-[380px] text-center">
-        <h1 class="text-4xl font-black mb-1 italic tracking-tighter italic">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
+        <h1 class="text-4xl font-black mb-1 italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
         <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold">Battle Mode</p>
         
         <div class="space-y-4">
@@ -107,6 +107,7 @@
         let connections = [];
         let isOwner = false;
         let myPhotosCount = 0;
+        let notificationSent = false;
         let gameState = { 
             name: "", 
             timeLeft: 0, 
@@ -125,13 +126,30 @@
             document.getElementById('myNickname').value = myProfile.nick;
             document.getElementById('myAvatarDisplay').src = myProfile.avatar;
             
-            // Tenta recuperar sessão se a página foi atualizada
             const savedRoom = sessionStorage.getItem('current_arena');
             if(savedRoom) {
                 document.getElementById('joinCode').value = savedRoom;
                 joinArena();
             }
         };
+
+        // Função para Notificações
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission();
+            }
+        }
+
+        function sendTimeUpNotification() {
+            if ("Notification" in window && Notification.permission === "granted" && !notificationSent) {
+                new Notification("PHOTO ARENA", {
+                    body: "O TEMPO ESGOTOU! Veja quem venceu a batalha!",
+                    icon: "https://cdn-icons-png.flaticon.com/512/869/869146.png"
+                });
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                notificationSent = true;
+            }
+        }
 
         function saveProfile() {
             myProfile.nick = document.getElementById('myNickname').value;
@@ -154,6 +172,7 @@
             const limit = document.getElementById('photoLimit').value;
             if(!name || !time) return alert("Preencha os campos!");
 
+            requestNotificationPermission(); // Pede permissão ao criar
             const code = Math.floor(1000 + Math.random() * 9000).toString();
             isOwner = true;
             gameState.name = name;
@@ -176,6 +195,7 @@
         function joinArena() {
             const code = document.getElementById('joinCode').value;
             if(!code) return alert("Código?");
+            requestNotificationPermission(); // Pede permissão ao entrar
             peer = new Peer();
             peer.on('open', () => {
                 conn = peer.connect('ARENA-' + code);
@@ -185,9 +205,7 @@
                     showArena(code);
                 });
                 conn.on('data', (data) => handleData(data));
-                
                 conn.on('close', () => {
-                   // Se a conexão fechar e o jogo ainda corre, tenta reconectar uma vez
                    if(gameState.status === "running") setTimeout(joinArena, 2000);
                 });
             });
@@ -195,7 +213,6 @@
 
         function handleData(data, senderConn) {
             if(data.type === 'JOIN') {
-                // Se o jogador já existia (reconectou), mantemos os dados dele
                 if(!gameState.players[data.profile.nick]) {
                     gameState.players[data.profile.nick] = { score: 0, avatar: data.profile.avatar, likesGiven: [] };
                 }
@@ -203,6 +220,9 @@
             }
             if(data.type === 'SYNC') {
                 gameState = data.state;
+                if(gameState.timeLeft <= 0 && gameState.status === "finished") {
+                    sendTimeUpNotification();
+                }
                 renderArena();
             }
             if(data.type === 'FOTO') {
@@ -223,7 +243,7 @@
 
         function broadcastState() {
             if(!isOwner) return;
-            connections = connections.filter(c => c.open); // Limpa conexões mortas
+            connections = connections.filter(c => c.open);
             connections.forEach(c => c.send({ type: 'SYNC', state: gameState }));
             renderArena();
         }
@@ -334,6 +354,7 @@
                     broadcastState();
                 } else if (gameState.timeLeft <= 0 && gameState.status === "running") {
                     gameState.status = "finished";
+                    sendTimeUpNotification();
                     broadcastState();
                 }
             }, 1000);
