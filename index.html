@@ -6,51 +6,97 @@
     <title>PHOTO ARENA | Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #0a0a0a; color: #fff; font-family: 'Segoe UI', sans-serif; }
-        .neon-border { border: 2px solid #8b5cf6; box-shadow: 0 0 15px #8b5cf6; }
-        .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: 0.3s; }
-        .btn-gamer:hover { transform: scale(1.05); filter: brightness(1.2); }
+        body { background-color: #0a0a0a; color: #fff; font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
+        .neon-border { border: 2px solid #8b5cf6; box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+        .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: all 0.3s ease; }
+        .btn-gamer:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(217, 70, 239, 0.4); }
+        input { transition: all 0.2s; }
+        input:focus { box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
-    <div id="home" class="p-8 bg-zinc-900 rounded-xl neon-border w-96 text-center">
-        <h1 class="text-3xl font-black mb-6 italic">PHOTO <span class="text-purple-500">ARENA</span></h1>
+    <div id="home" class="p-8 bg-zinc-900 rounded-2xl neon-border w-96 text-center z-10">
+        <h1 class="text-4xl font-black mb-2 italic tracking-tighter text-white">
+            PHOTO <span class="text-purple-500 underline">ARENA</span>
+        </h1>
+        <p class="text-zinc-500 text-xs uppercase tracking-widest mb-8 font-bold">Competição em Tempo Real</p>
         
         <div class="space-y-4">
-            <input id="roomName" type="text" placeholder="Nome da Sala" class="w-full p-3 bg-zinc-800 rounded border border-zinc-700 outline-none focus:border-purple-500">
-            <input id="duration" type="number" placeholder="Tempo (minutos)" class="w-full p-3 bg-zinc-800 rounded border border-zinc-700 outline-none">
-            <button onclick="createRoom()" class="w-full p-3 btn-gamer rounded font-bold uppercase">Criar Arena</button>
+            <div class="text-left">
+                <label class="text-[10px] uppercase font-bold text-zinc-400 ml-1">Criar Nova Partida</label>
+                <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 bg-zinc-800 rounded-lg border border-zinc-700 outline-none focus:border-purple-500 mb-2">
+                <input id="duration" type="number" placeholder="Minutos (ex: 10)" class="w-full p-3 bg-zinc-800 rounded-lg border border-zinc-700 outline-none focus:border-purple-500">
+            </div>
             
-            <div class="border-t border-zinc-700 my-4 pt-4">
-                <input id="joinCode" type="text" placeholder="Código de 5 dígitos" class="w-full p-3 bg-zinc-800 rounded border border-zinc-700 mb-2">
-                <button onclick="joinRoom()" class="w-full p-3 bg-zinc-700 hover:bg-zinc-600 rounded font-bold uppercase">Entrar na Batalha</button>
+            <button id="btnCreate" class="w-full p-4 btn-gamer rounded-lg font-black uppercase text-sm tracking-widest">
+                <i class="fas fa-plus-circle mr-2"></i> Iniciar Arena
+            </button>
+            
+            <div class="relative py-4">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-zinc-800"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-zinc-900 px-2 text-zinc-500 font-bold">Ou</span></div>
+            </div>
+
+            <div class="text-left">
+                <label class="text-[10px] uppercase font-bold text-zinc-400 ml-1">Entrar com Código</label>
+                <input id="joinCode" type="text" maxlength="5" placeholder="00000" class="w-full p-3 bg-zinc-800 rounded-lg border border-zinc-700 text-center text-2xl font-mono tracking-widest outline-none focus:border-pink-500 mb-3">
+                <button id="btnJoin" class="w-full p-4 bg-zinc-100 text-black hover:bg-white rounded-lg font-black uppercase text-sm tracking-widest transition-all">
+                    <i class="fas fa-gamepad mr-2"></i> Entrar na Batalha
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="arena" class="hidden w-full max-w-4xl p-6">
-        <div class="flex justify-between items-center mb-8 bg-zinc-900 p-4 rounded neon-border">
-            <div>
-                <h2 id="displayRoomName" class="text-2xl font-bold">Arena: ---</h2>
-                <p>Código: <span id="displayCode" class="text-purple-400 font-mono">00000</span></p>
+    <div id="arena" class="hidden w-full max-w-5xl p-6 animate-in fade-in duration-500">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-zinc-900 p-6 rounded-2xl neon-border gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-purple-600 p-3 rounded-lg rotate-3 shadow-lg">
+                    <i class="fas fa-trophy text-2xl"></i>
+                </div>
+                <div>
+                    <h2 id="displayRoomName" class="text-2xl font-black uppercase italic">---</h2>
+                    <p class="text-zinc-400 font-mono text-sm">ROOM ID: <span id="displayCode" class="text-purple-400 tracking-tighter">00000</span></p>
+                </div>
             </div>
-            <div class="text-right">
-                <p class="text-zinc-400 uppercase text-xs">Tempo Restante</p>
-                <p id="timer" class="text-3xl font-mono text-red-500">00:00</p>
+            
+            <div class="flex items-center gap-6">
+                <div class="text-center px-6 border-r border-zinc-800">
+                    <p class="text-zinc-500 uppercase text-[10px] font-black tracking-widest">Status</p>
+                    <p id="statusLabel" class="text-green-500 font-bold animate-pulse uppercase text-sm">Live</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-zinc-500 uppercase text-[10px] font-black tracking-widest">Cronômetro</p>
+                    <p id="timer" class="text-4xl font-mono font-black text-white">00:00</p>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-6">
-            <div class="col-span-2 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-                <div class="mb-4 h-64 border-2 border-dashed border-zinc-700 flex items-center justify-center rounded">
-                    <button onclick="sendPhoto()" class="btn-gamer px-6 py-2 rounded-full font-bold">SUBIR FOTO (+200 PTS)</button>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-3 space-y-6">
+                <div class="bg-zinc-900/50 p-12 rounded-3xl border-2 border-dashed border-zinc-800 flex flex-col items-center justify-center group hover:border-purple-500 transition-colors">
+                    <div class="bg-zinc-800 w-20 h-20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-camera text-3xl text-zinc-500 group-hover:text-purple-400"></i>
+                    </div>
+                    <button id="btnSendPhoto" class="btn-gamer px-10 py-4 rounded-xl font-black uppercase text-sm tracking-tighter shadow-xl">
+                        Enviar Foto da Missão (+200 PTS)
+                    </button>
+                    <p class="mt-4 text-zinc-500 text-xs">PNG, JPG ou GIF até 10MB</p>
                 </div>
+                
+                <div id="photoFeed" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    </div>
             </div>
-            <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                <h3 class="font-bold border-b border-zinc-700 pb-2 mb-4 uppercase">Ranking</h3>
-                <ul id="leaderboard" class="space-y-2"></ul>
+
+            <div class="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden self-start">
+                <div class="bg-zinc-800 p-4 border-b border-zinc-700 flex items-center justify-between">
+                    <h3 class="font-black uppercase text-xs tracking-widest"><i class="fas fa-list-ol mr-2 text-purple-500"></i> Ranking Global</h3>
+                </div>
+                <ul id="leaderboard" class="divide-y divide-zinc-800">
+                    <li class="p-4 text-center text-zinc-600 italic text-sm">Aguardando competidores...</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -59,54 +105,80 @@
         const socket = io();
         let currentRoom = '';
 
-        function createRoom() {
+        // Corrigindo os Event Listeners
+        document.getElementById('btnCreate').addEventListener('click', () => {
             const name = document.getElementById('roomName').value;
             const time = document.getElementById('duration').value;
-            if(name && time) socket.emit('createRoom', { roomName: name, duration: time });
-        }
+            if(name && time) {
+                socket.emit('createRoom', { roomName: name, duration: time });
+            } else {
+                alert("Preencha o nome e o tempo!");
+            }
+        });
 
-        function joinRoom() {
+        document.getElementById('btnJoin').addEventListener('click', () => {
             const code = document.getElementById('joinCode').value;
-            if(code) socket.emit('joinRoom', code);
-        }
+            if(code) {
+                socket.emit('joinRoom', code);
+            } else {
+                alert("Digite o código de 5 dígitos!");
+            }
+        });
 
-        function sendPhoto() {
+        document.getElementById('btnSendPhoto').addEventListener('click', () => {
             socket.emit('sendPhoto', currentRoom);
-        }
+            // Simulação visual de clique
+            const btn = document.getElementById('btnSendPhoto');
+            btn.innerText = "FOTO ENVIADA!";
+            setTimeout(() => btn.innerText = "Enviar Foto da Missão (+200 PTS)", 1000);
+        });
 
+        // Eventos do Socket
         socket.on('roomCreated', (code) => {
-            currentRoom = code;
-            document.getElementById('home').classList.add('hidden');
-            document.getElementById('arena').classList.remove('hidden');
-            document.getElementById('displayCode').innerText = code;
+            enterArena(code, document.getElementById('roomName').value);
         });
 
         socket.on('joinedSuccess', (code) => {
-            currentRoom = code;
-            document.getElementById('home').classList.add('hidden');
-            document.getElementById('arena').classList.remove('hidden');
-            document.getElementById('displayCode').innerText = code;
+            enterArena(code, "Arena Ativa");
         });
+
+        socket.on('error', (msg) => alert(msg));
 
         socket.on('timerUpdate', (seconds) => {
             const m = Math.floor(seconds / 60);
             const s = seconds % 60;
-            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+            const timerEl = document.getElementById('timer');
+            timerEl.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if(seconds < 60) timerEl.classList.add('text-red-500');
         });
 
         socket.on('updateLeaderboard', (players) => {
             const list = document.getElementById('leaderboard');
             list.innerHTML = Object.values(players)
                 .sort((a,b) => b.points - a.points)
-                .map((p, index) => `<li class="flex justify-between p-2 ${index === 0 ? 'bg-purple-900/30 text-purple-400' : ''}">
-                    <span>#${index+1} User...${p.id.slice(0,4)}</span>
-                    <span class="font-bold">${p.points}</span>
-                </li>`).join('');
+                .map((p, index) => `
+                    <li class="flex justify-between items-center p-4 ${index === 0 ? 'bg-purple-500/10' : ''}">
+                        <div class="flex items-center gap-3">
+                            <span class="font-black ${index === 0 ? 'text-yellow-500' : 'text-zinc-500'}">#${index+1}</span>
+                            <span class="text-sm font-bold text-zinc-300">Player_${p.id.slice(0,4)}</span>
+                        </div>
+                        <span class="bg-zinc-800 px-3 py-1 rounded text-purple-400 font-mono font-bold">${p.points}</span>
+                    </li>`).join('');
         });
 
         socket.on('gameOver', (players) => {
-            alert('FIM DE JOGO! Verifique o ranking final.');
+            document.getElementById('statusLabel').innerText = "Encerrado";
+            document.getElementById('statusLabel').classList.replace('text-green-500', 'text-red-500');
+            alert('PARTIDA FINALIZADA! O campeão está no topo do ranking.');
         });
+
+        function enterArena(code, name) {
+            currentRoom = code;
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('arena').classList.remove('hidden');
+            document.getElementById('displayCode').innerText = code;
+            document.getElementById('displayRoomName').innerText = name;
+        }
     </script>
 </body>
 </html>
