@@ -3,158 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTO ARENA | Pro Edition</title>
+    <title>PHOTO ARENA | Elite Podium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
-        body { background-color: #050505; color: #fff; font-family: 'Rajdhani', sans-serif; }
+        body { background-color: #050505; color: #fff; font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
         
-        /* Manter o layout idêntico à imagem */
-        .neon-container { 
-            border: 1px solid #8b5cf6; 
-            box-shadow: 0 0 25px rgba(139, 92, 246, 0.3); 
-            background-color: #121212; 
-        }
-        .btn-gamer { 
-            background: linear-gradient(90deg, #8b5cf6, #d946ef); 
-            transition: all 0.3s ease; 
-        }
+        .neon-container { border: 1px solid #8b5cf6; box-shadow: 0 0 25px rgba(139, 92, 246, 0.3); background-color: #121212; }
+        .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: all 0.3s ease; cursor: pointer; }
         .btn-gamer:hover { filter: brightness(1.1); transform: scale(1.02); }
         
         input { background-color: #1c1c1c !important; border: 1px solid #333 !important; color: white !important; }
-        input:focus { border-color: #8b5cf6 !important; outline: none; }
         
-        /* Feed Estilo Instagram */
-        .photo-card { background: #1a1a1a; border: 1px solid #333; border-radius: 15px; overflow: hidden; }
+        /* Pódio Custom */
+        .podium-card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+        .avatar-frame { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #333; overflow: hidden; background: #222; }
+        .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .crown { position: absolute; top: -25px; font-size: 24px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
+        
+        .gold { color: #ffd700; border-color: #ffd700 !important; transform: scale(1.2); z-index: 10; }
+        .silver { color: #c0c0c0; border-color: #c0c0c0 !important; }
+        .bronze { color: #cd7f32; border-color: #cd7f32 !important; }
+
+        .photo-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         .photo-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+        #photoInput { display: none; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-6">
+<body class="flex flex-col items-center justify-center min-h-screen p-6">
+
+    <div id="profileBar" class="mb-6 bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center gap-4 w-full max-w-[380px]">
+        <label for="avatarInput" class="cursor-pointer">
+            <div class="w-12 h-12 rounded-full border-2 border-purple-500 overflow-hidden bg-zinc-800">
+                <img id="myAvatarDisplay" src="https://via.placeholder.com/150" alt="Avatar">
+            </div>
+            <input type="file" id="avatarInput" accept="image/*" onchange="updateProfileAvatar(event)">
+        </label>
+        <input id="myNickname" type="text" placeholder="Seu Nickname" onchange="saveProfile()" class="bg-transparent border-none outline-none font-bold text-purple-400 w-full" value="Player_One">
+    </div>
 
     <div id="home" class="p-8 rounded-2xl neon-container w-[380px] text-center">
-        <h1 class="text-4xl font-black mb-1 italic italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold text-center">Competição em Tempo Real</p>
+        <h1 class="text-4xl font-black mb-1 italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold">Battle Mode</p>
         
         <div class="space-y-4">
-            <div class="text-left text-[10px] font-bold text-zinc-400 uppercase ml-1">Criar Nova Partida</div>
+            <div class="text-left text-[10px] font-bold text-zinc-400 uppercase">Criar Arena</div>
             <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg text-sm">
-            <input id="duration" type="number" placeholder="2" class="w-full p-3 rounded-lg text-sm">
+            <input id="duration" type="number" placeholder="Minutos (Ex: 5)" class="w-full p-3 rounded-lg text-sm">
+            <button onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm">Iniciar Arena</button>
             
-            <button onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm flex items-center justify-center gap-2 shadow-lg">
-                <i class="fas fa-plus-circle text-xs"></i> Iniciar Arena
-            </button>
-            
-            <div class="flex items-center gap-2 my-4">
-                <div class="h-[1px] bg-zinc-800 flex-1"></div>
-                <span class="text-[10px] text-zinc-600 font-bold uppercase">ou</span>
-                <div class="h-[1px] bg-zinc-800 flex-1"></div>
-            </div>
+            <div class="py-2 text-[10px] text-zinc-600 font-bold uppercase">ou</div>
 
-            <div class="text-left text-[10px] font-bold text-zinc-400 uppercase ml-1">Entrar com Código</div>
-            <input id="joinCode" type="text" maxlength="5" placeholder="00000" class="w-full p-3 rounded-lg text-center text-xl font-mono tracking-widest">
-            <button onclick="joinArena()" class="w-full p-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg font-black uppercase text-sm flex items-center justify-center gap-2">
-                <i class="fab fa-playstation text-xs"></i> Entrar na Batalha
-            </button>
+            <input id="joinCode" type="text" maxlength="5" placeholder="CÓDIGO" class="w-full p-3 rounded-lg text-center text-xl font-mono tracking-widest">
+            <button onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm">Entrar na Batalha</button>
         </div>
     </div>
 
-    <div id="arena" class="hidden w-full max-w-5xl animate-in fade-in duration-500">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-zinc-900 p-6 rounded-2xl neon-container gap-4">
+    <div id="arena" class="hidden w-full max-w-5xl">
+        <div id="arenaHeader" class="flex flex-col md:flex-row justify-between items-center mb-6 bg-zinc-900 p-6 rounded-2xl neon-container gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-purple-600 p-3 rounded-lg"><i class="fas fa-trophy text-2xl"></i></div>
+                <div class="bg-purple-600 p-3 rounded-lg"><i class="fas fa-bolt text-2xl"></i></div>
                 <div>
                     <h2 id="activeRoomName" class="text-2xl font-black uppercase italic leading-none">---</h2>
-                    <p class="text-zinc-400 font-mono text-sm mt-1">CÓDIGO: <span id="activeCode" class="text-purple-400 font-bold">00000</span></p>
+                    <p class="text-zinc-400 font-mono text-sm">CÓDIGO: <span id="activeCode" class="text-purple-400">00000</span></p>
                 </div>
             </div>
-            <div class="text-right">
-                <p class="text-zinc-500 uppercase text-[10px] font-black tracking-widest">Tempo Restante</p>
-                <p id="timerDisplay" class="text-4xl font-mono font-black text-white leading-none">00:00</p>
+            <div id="timerBox" class="text-right">
+                <p class="text-zinc-500 uppercase text-[10px] font-black">Tempo Restante</p>
+                <p id="timerDisplay" class="text-4xl font-mono font-black text-white">00:00</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div id="activeContent" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div class="lg:col-span-3 space-y-6">
                 <div class="bg-zinc-900/50 p-10 rounded-3xl border-2 border-dashed border-zinc-800 text-center">
-                    <label for="photoInput" class="btn-gamer px-10 py-4 rounded-xl inline-block cursor-pointer font-black text-sm uppercase shadow-xl">
+                    <label for="photoInput" class="btn-gamer px-10 py-4 rounded-xl inline-block cursor-pointer font-black text-sm uppercase">
                         <i class="fas fa-camera mr-2"></i> Publicar Foto (+200 PTS)
                     </label>
                     <input type="file" id="photoInput" accept="image/*" onchange="validateAndUpload(event)">
-                    <p class="mt-4 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">A pontuação só é validada após o envio do arquivo</p>
                 </div>
-                
-                <h3 class="font-black uppercase text-xs tracking-widest text-zinc-500 italic">Feed da Missão</h3>
-                <div id="photoFeed" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    </div>
+                <div id="photoFeed" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+            </div>
+            <div class="bg-zinc-900 rounded-2xl border border-zinc-800 h-fit">
+                <div class="bg-zinc-800 p-4 font-black uppercase text-[10px] border-b border-zinc-700">Ranking Online</div>
+                <ul id="rankingList" class="divide-y divide-zinc-800"></ul>
+            </div>
+        </div>
+
+        <div id="podiumScreen" class="hidden flex-col items-center bg-zinc-900 p-10 rounded-3xl neon-container animate-in zoom-in duration-500">
+            <h2 class="text-3xl font-black uppercase italic mb-12 text-purple-500">Resultados Finais</h2>
+            
+            <div class="flex items-end justify-center gap-4 md:gap-12 mb-12 w-full h-64">
+                <div class="podium-card">
+                    <i class="fas fa-crown crown bronze"></i>
+                    <div class="avatar-frame bronze"><img id="p3_img" src=""></div>
+                    <p id="p3_name" class="font-bold mt-2 text-sm text-zinc-400">---</p>
+                    <p id="p3_score" class="text-xl font-black text-white">0</p>
+                </div>
+
+                <div class="podium-card">
+                    <i class="fas fa-crown crown gold"></i>
+                    <div class="avatar-frame gold w-32 h-32"><img id="p1_img" src=""></div>
+                    <p id="p1_name" class="font-black mt-2 text-lg text-yellow-500">CAMPEÃO</p>
+                    <p id="p1_score" class="text-3xl font-black text-white">0</p>
+                </div>
+
+                <div class="podium-card">
+                    <i class="fas fa-crown crown silver"></i>
+                    <div class="avatar-frame silver"><img id="p2_img" src=""></div>
+                    <p id="p2_name" class="font-bold mt-2 text-sm text-zinc-300">---</p>
+                    <p id="p2_score" class="text-xl font-black text-white">0</p>
+                </div>
             </div>
 
-            <div class="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden self-start sticky top-4">
-                <div class="bg-zinc-800 p-4 font-black uppercase text-[10px] tracking-widest border-b border-zinc-700">Placar Atual</div>
-                <ul id="rankingList" class="divide-y divide-zinc-800"></ul>
+            <div class="flex gap-4 w-full justify-center">
+                <button onclick="exitArena()" class="px-8 py-3 bg-zinc-800 rounded-xl font-bold uppercase text-xs">Sair da Arena</button>
+                <div id="adminControls" class="hidden flex gap-4">
+                    <button onclick="extendTime()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase text-xs text-white">Prolongar Tempo</button>
+                    <button onclick="deleteArena()" class="px-8 py-3 bg-red-600 rounded-xl font-bold uppercase text-xs text-white">Apagar Sala</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Carrega dados salvos para não perder no F5
-        let gameState = JSON.parse(localStorage.getItem('arenaSave')) || { name: '', code: '', timeLeft: 0, score: 0, photos: [] };
+        let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'Player_One', avatar: 'https://via.placeholder.com/150' };
+        let gameState = JSON.parse(localStorage.getItem('arenaSave')) || { active: false };
         let timerLoop;
 
-        // Se já houver um jogo ativo ao abrir a página
-        if (gameState.code) { restoreGame(); }
+        // Inicializar perfil
+        document.getElementById('myNickname').value = profile.nick;
+        document.getElementById('myAvatarDisplay').src = profile.avatar;
+
+        if (gameState.active) restoreGame();
+
+        function saveProfile() {
+            profile.nick = document.getElementById('myNickname').value;
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+        }
+
+        function updateProfileAvatar(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                profile.avatar = e.target.result;
+                document.getElementById('myAvatarDisplay').src = e.target.result;
+                saveProfile();
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
 
         function createArena() {
             const name = document.getElementById('roomName').value;
             const time = document.getElementById('duration').value;
-            if(!name || !time) return alert("Preencha o nome e o tempo!");
+            if(!name || !time) return alert("Preencha tudo!");
 
             gameState = {
+                active: true,
+                isOwner: true,
+                status: 'running',
                 name: name,
                 code: Math.floor(10000 + Math.random() * 90000).toString(),
                 timeLeft: time * 60,
                 score: 0,
-                photos: []
+                photos: [],
+                ranking: [] // Simulação: No real seria o DB
             };
-            initGame();
+            startArena();
         }
 
         function joinArena() {
             const code = document.getElementById('joinCode').value;
-            if(code.length < 5) return alert("Código inválido!");
-            gameState = { name: "Arena Privada", code: code, timeLeft: 1200, score: 0, photos: [] };
-            initGame();
+            if(code.length < 5) return alert("Código!");
+            gameState = {
+                active: true,
+                isOwner: false,
+                status: 'running',
+                name: "Arena Privada",
+                code: code,
+                timeLeft: 600,
+                score: 0,
+                photos: [],
+                ranking: []
+            };
+            startArena();
         }
 
-        function initGame() {
+        function startArena() {
             localStorage.setItem('arenaSave', JSON.stringify(gameState));
             restoreGame();
         }
 
         function restoreGame() {
             document.getElementById('home').style.display = 'none';
+            document.getElementById('profileBar').style.display = 'none';
             document.getElementById('arena').classList.remove('hidden');
             document.getElementById('activeRoomName').innerText = gameState.name;
             document.getElementById('activeCode').innerText = gameState.code;
-            
-            renderFeed();
-            updateRanking();
-            
+
+            if (gameState.status === 'finished') {
+                showPodium();
+            } else {
+                runTimer();
+                renderFeed();
+                updateRanking();
+            }
+        }
+
+        function runTimer() {
             if(timerLoop) clearInterval(timerLoop);
             timerLoop = setInterval(() => {
                 if(gameState.timeLeft <= 0) {
                     clearInterval(timerLoop);
-                    alert("TEMPO ESGOTADO!");
-                    localStorage.removeItem('arenaSave');
-                    location.reload();
+                    finishArena();
                     return;
                 }
                 gameState.timeLeft--;
                 const m = Math.floor(gameState.timeLeft / 60);
                 const s = gameState.timeLeft % 60;
                 document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-                
-                // Salva o tempo a cada segundo
                 localStorage.setItem('arenaSave', JSON.stringify(gameState));
             }, 1000);
         }
@@ -162,14 +229,10 @@
         function validateAndUpload(event) {
             const file = event.target.files[0];
             if(!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(e) {
-                // Adiciona a foto no feed (Base64)
+            reader.onload = (e) => {
                 gameState.photos.unshift(e.target.result);
-                // SÓ GANHA PONTO AQUI PORQUE ENVIOU FOTO
                 gameState.score += 200;
-                
                 localStorage.setItem('arenaSave', JSON.stringify(gameState));
                 renderFeed();
                 updateRanking();
@@ -177,24 +240,76 @@
             reader.readAsDataURL(file);
         }
 
+        function finishArena() {
+            gameState.status = 'finished';
+            localStorage.setItem('arenaSave', JSON.stringify(gameState));
+            showPodium();
+        }
+
+        function showPodium() {
+            document.getElementById('activeContent').classList.add('hidden');
+            document.getElementById('timerBox').classList.add('hidden');
+            document.getElementById('podiumScreen').classList.remove('hidden');
+            document.getElementById('podiumScreen').classList.add('flex');
+
+            if(gameState.isOwner) document.getElementById('adminControls').classList.remove('hidden');
+
+            // Simulação de vencedores para o pódio baseada na sua pontuação
+            // Em produção, isso viria do servidor comparando todos
+            const winners = [
+                { nick: profile.nick, score: gameState.score, avatar: profile.avatar },
+                { nick: "Player_Silver", score: Math.floor(gameState.score * 0.7), avatar: "https://via.placeholder.com/150/333" },
+                { nick: "Player_Bronze", score: Math.floor(gameState.score * 0.4), avatar: "https://via.placeholder.com/150/444" }
+            ];
+
+            document.getElementById('p1_name').innerText = winners[0].nick;
+            document.getElementById('p1_score').innerText = winners[0].score;
+            document.getElementById('p1_img').src = winners[0].avatar;
+
+            document.getElementById('p2_name').innerText = winners[1].nick;
+            document.getElementById('p2_score').innerText = winners[1].score;
+            document.getElementById('p2_img').src = winners[1].avatar;
+
+            document.getElementById('p3_name').innerText = winners[2].nick;
+            document.getElementById('p3_score').innerText = winners[2].score;
+            document.getElementById('p3_img').src = winners[2].avatar;
+        }
+
         function renderFeed() {
-            const feed = document.getElementById('photoFeed');
-            feed.innerHTML = gameState.photos.map(src => `
-                <div class="photo-card animate-in zoom-in duration-300">
+            document.getElementById('photoFeed').innerHTML = gameState.photos.map(src => `
+                <div class="photo-card animate-in zoom-in">
                     <img src="${src}">
-                    <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400">+200 PTS</div>
+                    <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400">POSTADO POR ${profile.nick}</div>
                 </div>
             `).join('');
         }
 
         function updateRanking() {
-            const list = document.getElementById('rankingList');
-            list.innerHTML = `
-                <li class="p-4 flex justify-between items-center bg-purple-500/10">
-                    <span class="font-bold text-sm">VOCÊ (PLAYER)</span>
-                    <span class="bg-zinc-800 px-3 py-1 rounded text-purple-400 font-mono font-bold">${gameState.score}</span>
+            document.getElementById('rankingList').innerHTML = `
+                <li class="p-4 flex justify-between items-center bg-purple-500/10 border-l-4 border-purple-500">
+                    <div class="flex items-center gap-2">
+                        <img src="${profile.avatar}" class="w-6 h-6 rounded-full">
+                        <span class="font-bold text-sm uppercase">${profile.nick}</span>
+                    </div>
+                    <span class="text-purple-400 font-bold">${gameState.score}</span>
                 </li>
             `;
+        }
+
+        function exitArena() {
+            localStorage.removeItem('arenaSave');
+            location.reload();
+        }
+
+        function deleteArena() {
+            if(confirm("Deseja apagar a sala permanentemente?")) exitArena();
+        }
+
+        function extendTime() {
+            gameState.status = 'running';
+            gameState.timeLeft = 300; // Adiciona 5 min
+            localStorage.setItem('arenaSave', JSON.stringify(gameState));
+            location.reload();
         }
     </script>
 </body>
