@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTO ARENA | Online Real-Time</title>
+    <title>PHOTO ARENA | Online Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -14,6 +14,7 @@
         .neon-container { border: 1px solid #8b5cf6; box-shadow: 0 0 25px rgba(139, 92, 246, 0.3); background-color: #121212; }
         .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: all 0.3s ease; cursor: pointer; border: none; }
         .btn-gamer:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
         .nick-input { background: #1a1a1a !important; border: 1px solid #333 !important; color: #a855f7 !important; padding: 8px 15px; border-radius: 8px; font-weight: bold; width: 100%; }
         .avatar-frame { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #333; overflow: hidden; background: #222; position: relative; }
         .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
@@ -23,6 +24,10 @@
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-6">
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-black z-50 flex items-center justify-center font-bold text-purple-500 uppercase tracking-widest">
+        Conectando à Arena...
+    </div>
 
     <div id="profileBar" class="mb-6 bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center gap-4 w-full max-w-[380px]">
         <label for="avatarInput" class="cursor-pointer">
@@ -38,16 +43,16 @@
     </div>
 
     <div id="home" class="p-8 rounded-2xl neon-container w-[380px] text-center">
-        <h1 class="text-4xl font-black mb-1 italic italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold text-center">Competição Online</p>
+        <h1 class="text-4xl font-black mb-1 italic tracking-tighter italic">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold">Online Battle</p>
         
         <div class="space-y-4">
-            <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
-            <input id="duration" type="number" placeholder="Tempo (Minutos)" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
-            <button onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm">Iniciar Arena</button>
+            <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none text-white">
+            <input id="duration" type="number" placeholder="Minutos" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none text-white">
+            <button id="btnCreate" onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm">Iniciar Arena</button>
             <div class="py-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest">ou</div>
-            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono">
-            <button onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm">Entrar na Batalha</button>
+            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono text-white">
+            <button id="btnJoin" onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm hover:bg-zinc-700">Entrar na Batalha</button>
         </div>
     </div>
 
@@ -89,36 +94,40 @@
         <div id="podiumScreen" class="hidden flex-col items-center bg-zinc-900 p-12 rounded-3xl neon-container">
             <h2 class="text-3xl font-black uppercase italic mb-16 text-purple-500 text-center">Arena Finalizada</h2>
             <div class="flex items-end justify-center gap-4 md:gap-16 mb-16 w-full max-w-3xl">
-                <div class="podium-card"><i class="fas fa-crown crown-icon text-[#cd7f32]"></i><div class="avatar-frame border-[#cd7f32]"><img id="p3_img"></div><p id="p3_name" class="font-bold mt-2">---</p><p id="p3_score">0</p></div>
-                <div class="podium-card scale-110"><i class="fas fa-crown crown-icon text-[#ffd700] text-4xl"></i><div class="avatar-frame border-[#ffd700] w-32 h-32"><img id="p1_img"></div><p id="p1_name" class="font-black text-yellow-500">---</p><p id="p1_score" class="text-3xl font-black">0</p></div>
-                <div class="podium-card"><i class="fas fa-crown crown-icon text-[#c0c0c0]"></i><div class="avatar-frame border-[#c0c0c0] w-24 h-24"><img id="p2_img"></div><p id="p2_name" class="font-bold mt-2 text-zinc-300">---</p><p id="p2_score">0</p></div>
+                <div class="podium-card"><i class="fas fa-crown crown-icon text-[#cd7f32]"></i><div class="avatar-frame border-[#cd7f32]"><img id="p3_img" src=""></div><p id="p3_name" class="font-bold mt-2">---</p><p id="p3_score" class="font-black">0</p></div>
+                <div class="podium-card scale-110"><i class="fas fa-crown crown-icon text-[#ffd700] text-4xl"></i><div class="avatar-frame border-[#ffd700] w-32 h-32"><img id="p1_img" src=""></div><p id="p1_name" class="font-black text-yellow-500 uppercase">---</p><p id="p1_score" class="text-3xl font-black">0</p></div>
+                <div class="podium-card"><i class="fas fa-crown crown-icon text-[#c0c0c0]"></i><div class="avatar-frame border-[#c0c0c0] w-24 h-24"><img id="p2_img" src=""></div><p id="p2_name" class="font-bold mt-2 text-zinc-300">---</p><p id="p2_score" class="font-black">0</p></div>
             </div>
             <div id="adminControls" class="hidden flex gap-4">
-                <button onclick="extendTime()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase text-xs text-white">Prolongar</button>
+                <button onclick="extendTime()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase text-xs text-white">Prolongar Tempo</button>
                 <button onclick="leaveArena()" class="px-8 py-3 bg-red-600 rounded-xl font-bold uppercase text-xs text-white">Apagar Sala</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE (Banco de Dados em Tempo Real Gratuito)
-        const firebaseConfig = {
-            databaseURL: "https://arena-photo-default-rtdb.firebaseio.com/" // Banco público temporário para seu teste
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'User'+Math.floor(Math.random()*999), avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1' };
+        // FIREBASE INICIALIZAÇÃO SEGURA
+        const firebaseConfig = { databaseURL: "https://arena-photo-default-rtdb.firebaseio.com/" };
+        
+        let db;
+        let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'User_'+Math.floor(Math.random()*99), avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1' };
         let currentRoom = null;
         let isOwner = false;
 
-        document.getElementById('myNickname').value = profile.nick;
-        document.getElementById('myAvatarDisplay').src = profile.avatar;
+        window.onload = () => {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.database();
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('myNickname').value = profile.nick;
+            document.getElementById('myAvatarDisplay').src = profile.avatar;
+        };
 
         function createArena() {
             const name = document.getElementById('roomName').value;
             const time = document.getElementById('duration').value;
-            if(!name || !time) return alert("Preencha tudo!");
+            if(!name || !time) return alert("Preencha nome e tempo!");
 
             const code = Math.floor(1000 + Math.random() * 9000).toString();
             isOwner = true;
@@ -128,23 +137,25 @@
                 timeLeft: time * 60,
                 status: 'running',
                 owner: profile.nick,
-                photos: [],
+                photos: {},
                 participants: {}
             };
 
             db.ref('rooms/' + code).set(roomData).then(() => {
                 enterRoom(code);
                 startGlobalTimer(code);
-            });
+            }).catch(e => alert("Erro ao criar sala. Verifique sua conexão."));
         }
 
         function joinArena() {
             const code = document.getElementById('joinCode').value;
+            if(!code) return alert("Digite o código!");
+            
             db.ref('rooms/' + code).once('value', snapshot => {
                 if(snapshot.exists()) {
                     enterRoom(code);
                 } else {
-                    alert("Código não encontrado!");
+                    alert("Sala não encontrada!");
                 }
             });
         }
@@ -156,47 +167,46 @@
             document.getElementById('arena').classList.remove('hidden');
             document.getElementById('activeCode').innerText = code;
 
-            // Registrar participante
-            db.ref('rooms/' + code + '/participants/' + profile.nick.replace(/\./g, '_')).set({
+            const safeNick = profile.nick.replace(/[.#$\[\]]/g, "_");
+            db.ref('rooms/' + code + '/participants/' + safeNick).update({
                 score: 0,
                 avatar: profile.avatar
             });
 
-            // Ouvir mudanças na sala em tempo real
             db.ref('rooms/' + code).on('value', snapshot => {
                 const data = snapshot.val();
                 if(!data) return;
-
-                document.getElementById('activeRoomName').innerText = data.name;
+                
+                if (data.owner === profile.nick) isOwner = true;
                 updateUI(data);
                 
                 if(data.status === 'finished') {
                     showPodium(data);
+                } else {
+                    hidePodium();
                 }
             });
         }
 
         function updateUI(data) {
-            // Timer
+            document.getElementById('activeRoomName').innerText = data.name;
             const m = Math.floor(data.timeLeft / 60);
             const s = data.timeLeft % 60;
             document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
-            // Feed
             const feed = document.getElementById('photoFeed');
             const photosArr = data.photos ? Object.values(data.photos).reverse() : [];
             feed.innerHTML = photosArr.map(p => `
-                <div class="photo-card animate-in zoom-in">
+                <div class="photo-card">
                     <img src="${p.src}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
                     <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400 uppercase">${p.user}</div>
                 </div>
             `).join('');
 
-            // Ranking
             const participants = data.participants ? Object.entries(data.participants) : [];
             const sorted = participants.sort((a,b) => b[1].score - a[1].score);
             document.getElementById('rankingList').innerHTML = sorted.map(([nick, p]) => `
-                <li class="p-4 flex justify-between items-center ${nick === profile.nick ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
+                <li class="p-4 flex justify-between items-center ${nick === profile.nick.replace(/[.#$\[\]]/g, "_") ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
                     <div class="flex items-center gap-2">
                         <img src="${p.avatar}" class="w-6 h-6 rounded-full">
                         <span class="font-bold text-sm uppercase">${nick}</span>
@@ -208,28 +218,28 @@
 
         function uploadPhoto(event) {
             const file = event.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                const photoData = { src: e.target.result, user: profile.nick };
-                db.ref('rooms/' + currentRoom + '/photos').push(photoData);
-                
-                // Incrementar score
-                const userRef = db.ref('rooms/' + currentRoom + '/participants/' + profile.nick.replace(/\./g, '_') + '/score');
-                userRef.transaction(currentScore => (currentScore || 0) + 200);
+                db.ref('rooms/' + currentRoom + '/photos').push({ src: e.target.result, user: profile.nick });
+                const safeNick = profile.nick.replace(/[.#$\[\]]/g, "_");
+                db.ref('rooms/' + currentRoom + '/participants/' + safeNick + '/score').transaction(s => (s || 0) + 200);
             };
             reader.readAsDataURL(file);
         }
 
         function startGlobalTimer(code) {
             const timer = setInterval(() => {
-                const roomRef = db.ref('rooms/' + code);
-                roomRef.child('timeLeft').transaction(t => {
-                    if(t <= 0) {
-                        roomRef.update({ status: 'finished' });
+                const ref = db.ref('rooms/' + code);
+                ref.once('value', s => {
+                    const data = s.val();
+                    if(!data || data.status === 'finished') return clearInterval(timer);
+                    if(data.timeLeft <= 0) {
+                        ref.update({ status: 'finished' });
                         clearInterval(timer);
-                        return 0;
+                    } else {
+                        ref.update({ timeLeft: data.timeLeft - 1 });
                     }
-                    return t - 1;
                 });
             }, 1000);
         }
@@ -252,16 +262,37 @@
             fill('p1', sorted[0]); fill('p2', sorted[1]); fill('p3', sorted[2]);
         }
 
+        function hidePodium() {
+            document.getElementById('activeContent').classList.remove('hidden');
+            document.getElementById('activeControls').classList.remove('hidden');
+            document.getElementById('podiumScreen').classList.add('hidden');
+            document.getElementById('podiumScreen').classList.remove('flex');
+        }
+
+        function extendTime() {
+            const t = prompt("Minutos para prolongar:");
+            if(t) db.ref('rooms/' + currentRoom).update({ timeLeft: parseInt(t)*60, status: 'running' });
+        }
+
         function leaveArena() {
-            db.ref('rooms/' + currentRoom).remove();
+            if(isOwner) db.ref('rooms/' + currentRoom).remove();
             location.reload();
         }
 
         function backToMenu() { location.reload(); }
-        function saveProfile() { profile.nick = document.getElementById('myNickname').value; localStorage.setItem('userProfile', JSON.stringify(profile)); }
+        
+        function saveProfile() { 
+            profile.nick = document.getElementById('myNickname').value; 
+            localStorage.setItem('userProfile', JSON.stringify(profile)); 
+        }
+
         function updateProfileAvatar(e) {
             const r = new FileReader();
-            r.onload = (ev) => { profile.avatar = ev.target.result; document.getElementById('myAvatarDisplay').src = ev.target.result; saveProfile(); };
+            r.onload = (ev) => { 
+                profile.avatar = ev.target.result; 
+                document.getElementById('myAvatarDisplay').src = ev.target.result; 
+                saveProfile(); 
+            };
             r.readAsDataURL(e.target.files[0]);
         }
     </script>
