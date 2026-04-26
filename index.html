@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTO ARENA | Online Fixed</title>
+    <title>PHOTO ARENA | Battle Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
         body { background-color: #050505; color: #fff; font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
         .neon-container { border: 1px solid #8b5cf6; box-shadow: 0 0 25px rgba(139, 92, 246, 0.3); background-color: #121212; }
         .btn-gamer { background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: all 0.3s ease; cursor: pointer; border: none; }
-        .btn-gamer:hover { filter: brightness(1.1); transform: scale(1.02); }
-        .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .btn-gamer:hover:not(:disabled) { filter: brightness(1.1); transform: scale(1.02); }
+        .btn-gamer:disabled { opacity: 0.5; cursor: not-allowed; }
         .nick-input { background: #1a1a1a !important; border: 1px solid #333 !important; color: #a855f7 !important; padding: 8px 15px; border-radius: 8px; font-weight: bold; width: 100%; }
         .avatar-frame { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #333; overflow: hidden; background: #222; position: relative; }
         .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
@@ -25,8 +27,9 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-6">
 
-    <div id="loadingOverlay" class="fixed inset-0 bg-black z-50 flex items-center justify-center font-bold text-purple-500 uppercase tracking-widest">
-        Conectando à Arena...
+    <div id="loadingOverlay" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
+        <div class="text-purple-500 font-black text-2xl animate-pulse mb-2 italic">PHOTO ARENA</div>
+        <div class="text-zinc-500 text-xs uppercase tracking-widest" id="loadStatus">Conectando ao satélite...</div>
     </div>
 
     <div id="profileBar" class="mb-6 bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center gap-4 w-full max-w-[380px]">
@@ -43,16 +46,16 @@
     </div>
 
     <div id="home" class="p-8 rounded-2xl neon-container w-[380px] text-center">
-        <h1 class="text-4xl font-black mb-1 italic tracking-tighter italic">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold">Online Battle</p>
+        <h1 class="text-4xl font-black mb-1 italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-8 font-bold">Arena Digital</p>
         
         <div class="space-y-4">
-            <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none text-white">
-            <input id="duration" type="number" placeholder="Minutos" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none text-white">
-            <button id="btnCreate" onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm">Iniciar Arena</button>
+            <input id="roomName" type="text" placeholder="Nome da Arena" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
+            <input id="duration" type="number" placeholder="Minutos" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 outline-none">
+            <button id="btnCreate" onclick="createArena()" class="w-full p-3 btn-gamer rounded-lg font-black uppercase text-sm" disabled>Iniciar Arena</button>
             <div class="py-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest">ou</div>
-            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono text-white">
-            <button id="btnJoin" onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm hover:bg-zinc-700">Entrar na Batalha</button>
+            <input id="joinCode" type="text" maxlength="4" placeholder="CÓDIGO" class="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-center text-xl font-mono">
+            <button id="btnJoin" onclick="joinArena()" class="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg font-black uppercase text-sm hover:bg-zinc-700" disabled>Entrar na Batalha</button>
         </div>
     </div>
 
@@ -62,16 +65,16 @@
                 <button onclick="backToMenu()" class="text-zinc-500 hover:text-white mr-2"><i class="fas fa-chevron-left text-xl"></i></button>
                 <div class="bg-purple-600 p-3 rounded-lg"><i class="fas fa-bolt text-2xl"></i></div>
                 <div>
-                    <h2 id="activeRoomName" class="text-2xl font-black uppercase italic leading-none">---</h2>
+                    <h2 id="activeRoomName" class="text-2xl font-black uppercase italic">---</h2>
                     <p class="text-zinc-400 font-mono text-sm">CÓDIGO: <span id="activeCode" class="text-purple-400">0000</span></p>
                 </div>
             </div>
-            <div id="activeControls" class="flex items-center gap-6">
+            <div class="flex items-center gap-6">
                 <div class="text-right border-r border-zinc-800 pr-6">
-                    <p class="text-zinc-500 uppercase text-[10px] font-black">Cronômetro</p>
+                    <p class="text-zinc-500 uppercase text-[10px] font-black">Tempo Restante</p>
                     <p id="timerDisplay" class="text-4xl font-mono font-black text-white">00:00</p>
                 </div>
-                <button onclick="leaveArena()" class="bg-red-900/20 text-red-500 hover:bg-red-900/40 px-4 py-2 rounded-lg text-xs font-bold uppercase border border-red-900/50">Abandonar</button>
+                <button onclick="leaveArena()" class="bg-red-900/20 text-red-500 hover:bg-red-900/40 px-4 py-2 rounded-lg text-xs font-bold uppercase border border-red-900/50">Sair</button>
             </div>
         </div>
 
@@ -86,55 +89,69 @@
                 <div id="photoFeed" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
             </div>
             <div class="bg-zinc-900 rounded-2xl border border-zinc-800 h-fit">
-                <div class="bg-zinc-800 p-4 font-black uppercase text-[10px] border-b border-zinc-700">Ranking Online</div>
+                <div class="bg-zinc-800 p-4 font-black uppercase text-[10px] border-b border-zinc-700">Ranking</div>
                 <ul id="rankingList" class="divide-y divide-zinc-800"></ul>
             </div>
         </div>
 
         <div id="podiumScreen" class="hidden flex-col items-center bg-zinc-900 p-12 rounded-3xl neon-container">
-            <h2 class="text-3xl font-black uppercase italic mb-16 text-purple-500 text-center">Arena Finalizada</h2>
+            <h2 class="text-3xl font-black uppercase italic mb-16 text-purple-500 text-center">Fim de Jogo</h2>
             <div class="flex items-end justify-center gap-4 md:gap-16 mb-16 w-full max-w-3xl">
                 <div class="podium-card"><i class="fas fa-crown crown-icon text-[#cd7f32]"></i><div class="avatar-frame border-[#cd7f32]"><img id="p3_img" src=""></div><p id="p3_name" class="font-bold mt-2">---</p><p id="p3_score" class="font-black">0</p></div>
                 <div class="podium-card scale-110"><i class="fas fa-crown crown-icon text-[#ffd700] text-4xl"></i><div class="avatar-frame border-[#ffd700] w-32 h-32"><img id="p1_img" src=""></div><p id="p1_name" class="font-black text-yellow-500 uppercase">---</p><p id="p1_score" class="text-3xl font-black">0</p></div>
                 <div class="podium-card"><i class="fas fa-crown crown-icon text-[#c0c0c0]"></i><div class="avatar-frame border-[#c0c0c0] w-24 h-24"><img id="p2_img" src=""></div><p id="p2_name" class="font-bold mt-2 text-zinc-300">---</p><p id="p2_score" class="font-black">0</p></div>
             </div>
             <div id="adminControls" class="hidden flex gap-4">
-                <button onclick="extendTime()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase text-xs text-white">Prolongar Tempo</button>
-                <button onclick="leaveArena()" class="px-8 py-3 bg-red-600 rounded-xl font-bold uppercase text-xs text-white">Apagar Sala</button>
+                <button onclick="extendTime()" class="px-8 py-3 btn-gamer rounded-xl font-bold uppercase text-xs text-white">Prolongar</button>
+                <button onclick="deleteRoom()" class="px-8 py-3 bg-red-600 rounded-xl font-bold uppercase text-xs text-white">Fechar Sala</button>
             </div>
         </div>
     </div>
 
     <script>
-        // FIREBASE INICIALIZAÇÃO SEGURA
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = { databaseURL: "https://arena-photo-default-rtdb.firebaseio.com/" };
-        
         let db;
-        let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'User_'+Math.floor(Math.random()*99), avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1' };
-        let currentRoom = null;
-        let isOwner = false;
+        let profile = JSON.parse(localStorage.getItem('userProfile')) || { nick: 'Player_'+Math.floor(Math.random()*99), avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1' };
+        let currentRoomCode = null;
 
-        window.onload = () => {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
+        // Inicialização com tratamento de erro
+        function initApp() {
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.database();
+                
+                // Habilitar botões
+                document.getElementById('btnCreate').disabled = false;
+                document.getElementById('btnJoin').disabled = false;
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                // Carregar perfil
+                document.getElementById('myNickname').value = profile.nick;
+                document.getElementById('myAvatarDisplay').src = profile.avatar;
+                
+                console.log("Firebase Conectado!");
+            } catch (e) {
+                document.getElementById('loadStatus').innerText = "Erro ao conectar. Recarregue a página.";
+                console.error(e);
             }
-            db = firebase.database();
-            document.getElementById('loadingOverlay').style.display = 'none';
-            document.getElementById('myNickname').value = profile.nick;
-            document.getElementById('myAvatarDisplay').src = profile.avatar;
-        };
+        }
+
+        // Rodar ao carregar a página
+        window.onload = initApp;
 
         function createArena() {
             const name = document.getElementById('roomName').value;
             const time = document.getElementById('duration').value;
-            if(!name || !time) return alert("Preencha nome e tempo!");
+            if(!name || !time) return alert("Preencha todos os campos!");
 
             const code = Math.floor(1000 + Math.random() * 9000).toString();
-            isOwner = true;
             
             const roomData = {
                 name: name,
-                timeLeft: time * 60,
+                timeLeft: parseInt(time) * 60,
                 status: 'running',
                 owner: profile.nick,
                 photos: {},
@@ -143,8 +160,9 @@
 
             db.ref('rooms/' + code).set(roomData).then(() => {
                 enterRoom(code);
-                startGlobalTimer(code);
-            }).catch(e => alert("Erro ao criar sala. Verifique sua conexão."));
+                // Iniciar timer global (apenas o dono controla)
+                setInterval(() => updateGlobalTimer(code), 1000);
+            });
         }
 
         function joinArena() {
@@ -155,13 +173,13 @@
                 if(snapshot.exists()) {
                     enterRoom(code);
                 } else {
-                    alert("Sala não encontrada!");
+                    alert("Código inválido!");
                 }
             });
         }
 
         function enterRoom(code) {
-            currentRoom = code;
+            currentRoomCode = code;
             document.getElementById('home').style.display = 'none';
             document.getElementById('profileBar').style.display = 'none';
             document.getElementById('arena').classList.remove('hidden');
@@ -173,17 +191,21 @@
                 avatar: profile.avatar
             });
 
+            // Ouvinte em tempo real
             db.ref('rooms/' + code).on('value', snapshot => {
                 const data = snapshot.val();
                 if(!data) return;
                 
-                if (data.owner === profile.nick) isOwner = true;
                 updateUI(data);
                 
                 if(data.status === 'finished') {
                     showPodium(data);
                 } else {
                     hidePodium();
+                }
+
+                if(data.owner === profile.nick) {
+                    document.getElementById('adminControls').classList.remove('hidden');
                 }
             });
         }
@@ -194,26 +216,31 @@
             const s = data.timeLeft % 60;
             document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
+            // Feed de Fotos
             const feed = document.getElementById('photoFeed');
-            const photosArr = data.photos ? Object.values(data.photos).reverse() : [];
-            feed.innerHTML = photosArr.map(p => `
-                <div class="photo-card">
-                    <img src="${p.src}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
-                    <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400 uppercase">${p.user}</div>
-                </div>
-            `).join('');
-
-            const participants = data.participants ? Object.entries(data.participants) : [];
-            const sorted = participants.sort((a,b) => b[1].score - a[1].score);
-            document.getElementById('rankingList').innerHTML = sorted.map(([nick, p]) => `
-                <li class="p-4 flex justify-between items-center ${nick === profile.nick.replace(/[.#$\[\]]/g, "_") ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
-                    <div class="flex items-center gap-2">
-                        <img src="${p.avatar}" class="w-6 h-6 rounded-full">
-                        <span class="font-bold text-sm uppercase">${nick}</span>
+            if(data.photos) {
+                const photosArr = Object.values(data.photos).reverse();
+                feed.innerHTML = photosArr.map(p => `
+                    <div class="photo-card">
+                        <img src="${p.src}" class="w-full aspect-square object-cover">
+                        <div class="p-2 text-center bg-zinc-800 text-[10px] font-bold text-purple-400 uppercase">${p.user}</div>
                     </div>
-                    <span class="text-purple-400 font-bold">${p.score}</span>
-                </li>
-            `).join('');
+                `).join('');
+            }
+
+            // Ranking
+            if(data.participants) {
+                const sorted = Object.entries(data.participants).sort((a,b) => b[1].score - a[1].score);
+                document.getElementById('rankingList').innerHTML = sorted.map(([nick, p]) => `
+                    <li class="p-4 flex justify-between items-center ${nick === profile.nick.replace(/[.#$\[\]]/g, "_") ? 'bg-purple-500/10 border-l-4 border-purple-500' : ''}">
+                        <div class="flex items-center gap-2">
+                            <img src="${p.avatar}" class="w-6 h-6 rounded-full">
+                            <span class="font-bold text-sm uppercase">${nick}</span>
+                        </div>
+                        <span class="text-purple-400 font-bold">${p.score}</span>
+                    </li>
+                `).join('');
+            }
         }
 
         function uploadPhoto(event) {
@@ -221,36 +248,31 @@
             if(!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                db.ref('rooms/' + currentRoom + '/photos').push({ src: e.target.result, user: profile.nick });
+                db.ref('rooms/' + currentRoomCode + '/photos').push({ src: e.target.result, user: profile.nick });
                 const safeNick = profile.nick.replace(/[.#$\[\]]/g, "_");
-                db.ref('rooms/' + currentRoom + '/participants/' + safeNick + '/score').transaction(s => (s || 0) + 200);
+                db.ref('rooms/' + currentRoomCode + '/participants/' + safeNick + '/score').transaction(s => (s || 0) + 200);
             };
             reader.readAsDataURL(file);
         }
 
-        function startGlobalTimer(code) {
-            const timer = setInterval(() => {
-                const ref = db.ref('rooms/' + code);
-                ref.once('value', s => {
-                    const data = s.val();
-                    if(!data || data.status === 'finished') return clearInterval(timer);
-                    if(data.timeLeft <= 0) {
-                        ref.update({ status: 'finished' });
-                        clearInterval(timer);
-                    } else {
-                        ref.update({ timeLeft: data.timeLeft - 1 });
-                    }
-                });
-            }, 1000);
+        function updateGlobalTimer(code) {
+            const ref = db.ref('rooms/' + code);
+            ref.once('value', s => {
+                const data = s.val();
+                if(!data || data.status === 'finished') return;
+                if(data.timeLeft <= 0) {
+                    ref.update({ status: 'finished' });
+                } else {
+                    ref.update({ timeLeft: data.timeLeft - 1 });
+                }
+            });
         }
 
         function showPodium(data) {
             document.getElementById('activeContent').classList.add('hidden');
-            document.getElementById('activeControls').classList.add('hidden');
             document.getElementById('podiumScreen').classList.remove('hidden');
             document.getElementById('podiumScreen').classList.add('flex');
-            if(isOwner) document.getElementById('adminControls').classList.remove('hidden');
-
+            
             const sorted = Object.entries(data.participants).sort((a,b) => b[1].score - a[1].score);
             const fill = (id, p) => {
                 if(p) {
@@ -264,21 +286,22 @@
 
         function hidePodium() {
             document.getElementById('activeContent').classList.remove('hidden');
-            document.getElementById('activeControls').classList.remove('hidden');
             document.getElementById('podiumScreen').classList.add('hidden');
-            document.getElementById('podiumScreen').classList.remove('flex');
         }
 
         function extendTime() {
-            const t = prompt("Minutos para prolongar:");
-            if(t) db.ref('rooms/' + currentRoom).update({ timeLeft: parseInt(t)*60, status: 'running' });
+            const t = prompt("Quantos minutos extras?");
+            if(t) db.ref('rooms/' + currentRoomCode).update({ timeLeft: parseInt(t)*60, status: 'running' });
         }
 
-        function leaveArena() {
-            if(isOwner) db.ref('rooms/' + currentRoom).remove();
-            location.reload();
+        function deleteRoom() {
+            if(confirm("Deseja mesmo encerrar a sala para todos?")) {
+                db.ref('rooms/' + currentRoomCode).remove();
+                location.reload();
+            }
         }
 
+        function leaveArena() { location.reload(); }
         function backToMenu() { location.reload(); }
         
         function saveProfile() { 
