@@ -3,186 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTO ARENA | Ultra Sync</title>
+    <title>PHOTO ARENA | Oficial</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
         body { background-color: #050505; color: #fff; font-family: 'Rajdhani', sans-serif; }
-        .neon-border { border: 1px solid #8b5cf6; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
-        .btn-main { background: linear-gradient(90deg, #8b5cf6, #d946ef); font-weight: 900; transition: 0.3s; }
-        .btn-main:hover { filter: brightness(1.2); transform: translateY(-2px); }
-        .input-dark { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 12px; outline: none; width: 100%; color: white; }
-        .input-dark:focus { border-color: #8b5cf6; }
+        
+        /* Layout fiel às suas fotos */
+        .main-card { border: 1px solid #8b5cf6; box-shadow: 0 0 25px rgba(139, 92, 246, 0.2); background-color: #0d0d0d; border-radius: 20px; }
+        .input-arena { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; color: white; padding: 12px; width: 100%; outline: none; }
+        .input-arena:focus { border-color: #8b5cf6; }
+        
+        .btn-iniciar { background: linear-gradient(90deg, #8b5cf6, #d946ef); border-radius: 12px; font-weight: 900; text-transform: uppercase; transition: 0.3s; }
+        .btn-entrar { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; font-weight: 900; text-transform: uppercase; color: white; transition: 0.3s; }
+        .btn-entrar:hover { background: #252525; }
+
+        .photo-card { background: #1a1a1a; border: 1px solid #333; border-radius: 15px; overflow: hidden; }
+        .ranking-item { border-bottom: 1px solid #222; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+        
+        input[type="file"] { display: none; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div id="screen-menu" class="w-full max-w-[400px] p-8 rounded-3xl neon-border bg-[#0d0d0d] text-center">
-        <h1 class="text-4xl font-black italic mb-1 uppercase italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
-        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-8">Battle Station Online</p>
+    <div id="homeScreen" class="w-full max-w-[400px] p-8 main-card text-center">
+        <h1 class="text-4xl font-black italic italic tracking-tighter">PHOTO <span class="text-purple-500 underline">ARENA</span></h1>
+        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-8">Competição em tempo real</p>
 
         <div class="space-y-4">
-            <div>
-                <label class="block text-left text-[10px] text-zinc-500 font-bold mb-1 uppercase ml-1">Seu Nickname</label>
-                <input id="nick" type="text" placeholder="Ex: Player_01" class="input-dark">
-            </div>
-            
-            <div class="pt-4 border-t border-zinc-800">
-                <input id="room-name" type="text" placeholder="Nome da Arena" class="input-dark mb-2">
-                <input id="room-time" type="number" placeholder="Minutos" class="input-dark mb-4">
-                <button onclick="handleCreate()" class="w-full p-4 rounded-xl btn-main uppercase text-sm">Iniciar Arena</button>
+            <div class="text-left">
+                <label class="text-[10px] text-zinc-500 font-bold uppercase ml-1">Criar nova partida</label>
+                <input id="roomName" type="text" placeholder="Nome da Arena" class="input-arena mb-2">
+                <input id="roomTime" type="number" placeholder="Minutos" class="input-arena mb-3">
+                <button onclick="criarArena()" class="w-full p-4 btn-iniciar flex items-center justify-center gap-2">
+                    <i class="fas fa-plus-circle text-sm"></i> Iniciar Arena
+                </button>
             </div>
 
-            <div class="relative py-4">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-zinc-800"></div></div>
-                <div class="relative flex justify-center text-[10px] uppercase text-zinc-600 bg-[#0d0d0d] px-2 font-bold">OU</div>
+            <div class="flex items-center gap-2 py-2">
+                <div class="h-[1px] bg-zinc-800 flex-1"></div>
+                <span class="text-[10px] text-zinc-600 font-bold">OU</span>
+                <div class="h-[1px] bg-zinc-800 flex-1"></div>
             </div>
 
-            <div>
-                <input id="join-code" type="text" placeholder="CÓDIGO DA SALA" class="input-dark mb-4 text-center text-xl font-mono tracking-widest">
-                <button onclick="handleJoin()" class="w-full p-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 font-black uppercase text-sm border border-zinc-700 transition">Entrar na Batalha</button>
+            <div class="text-left">
+                <label class="text-[10px] text-zinc-500 font-bold uppercase ml-1">Entrar com código</label>
+                <input id="joinCode" type="text" placeholder="0000" class="input-arena mb-3 text-center text-xl font-mono tracking-widest">
+                <button onclick="entrarArena()" class="w-full p-4 btn-entrar flex items-center justify-center gap-2">
+                    <i class="fas fa-gamepad"></i> Entrar na Batalha
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="screen-arena" class="hidden w-full max-w-5xl animate-in fade-in duration-500">
-        <div class="bg-[#0d0d0d] p-6 rounded-3xl neon-border flex flex-col md:flex-row justify-between items-center gap-6 mb-6">
+    <div id="arenaScreen" class="hidden w-full max-w-5xl">
+        <div class="main-card p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-purple-600 w-12 h-12 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                <div class="bg-purple-600 p-3 rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.4)]">
                     <i class="fas fa-bolt text-2xl"></i>
                 </div>
                 <div>
-                    <h2 id="disp-room-name" class="text-2xl font-black uppercase italic leading-none">---</h2>
-                    <p class="text-zinc-500 font-mono text-sm">CÓDIGO: <span id="disp-code" class="text-purple-400">0000</span></p>
+                    <h2 id="dispRoomName" class="text-2xl font-black uppercase italic leading-none">---</h2>
+                    <p class="text-zinc-500 font-mono text-sm uppercase">CÓDIGO: <span id="dispCode" class="text-purple-400">0000</span></p>
                 </div>
             </div>
             <div class="flex items-center gap-8">
                 <div class="text-right">
                     <p class="text-[10px] text-zinc-500 font-black uppercase">Cronômetro</p>
-                    <p id="disp-timer" class="text-4xl font-mono font-black">00:00</p>
+                    <p id="timerDisplay" class="text-4xl font-mono font-black text-white">00:00</p>
                 </div>
-                <button onclick="location.reload()" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-lg text-[10px] font-black uppercase">Sair</button>
+                <button onclick="location.reload()" class="bg-red-900/20 text-red-500 border border-red-900/30 px-4 py-2 rounded-lg text-[10px] font-black uppercase">Sair</button>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div class="lg:col-span-3 space-y-6">
-                <div class="bg-zinc-900/30 border-2 border-dashed border-zinc-800 p-12 rounded-3xl text-center">
-                    <label class="btn-main px-8 py-4 rounded-2xl cursor-pointer inline-block text-sm">
+                <div class="bg-zinc-900/30 border-2 border-dashed border-zinc-800 p-10 rounded-3xl text-center">
+                    <label class="btn-iniciar px-10 py-4 rounded-xl cursor-pointer inline-block text-sm">
                         <i class="fas fa-camera mr-2"></i> PUBLICAR FOTO (+200 PTS)
-                        <input type="file" class="hidden" accept="image/*" onchange="handleUpload(this)">
+                        <input type="file" accept="image/*" onchange="enviarFoto(this)">
                     </label>
                 </div>
-                <div id="feed" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                <div id="photoFeed" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
             </div>
-            <div class="bg-[#0d0d0d] rounded-3xl neon-border overflow-hidden h-fit">
-                <div class="bg-zinc-800/50 p-4 font-black uppercase text-xs border-b border-zinc-800">Ranking Online</div>
-                <div id="ranking" class="divide-y divide-zinc-800/50"></div>
+
+            <div class="main-card h-fit overflow-hidden">
+                <div class="bg-zinc-800/50 p-4 font-black uppercase text-[10px] border-b border-zinc-800">Ranking Online</div>
+                <div id="rankingList"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuração do Banco de Dados (Supabase)
-        const SB_URL = "https://vclvxtvclvxtvclvxt.supabase.co"; // URL de exemplo
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Key de exemplo
-        const supabase = supabase.createClient(SB_URL, SB_KEY);
+        let peer;
+        let conn;
+        let connections = [];
+        let myNick = "Player_" + Math.floor(Math.random()*99);
+        let gameState = { players: {}, photos: [], timeLeft: 0 };
 
-        let userNick = "";
-        let currentRoom = "";
+        // 1. CRIAR ARENA
+        function criarArena() {
+            const name = document.getElementById('roomName').value;
+            const time = document.getElementById('roomTime').value;
+            if(!name || !time) return alert("Preencha o nome e o tempo!");
 
-        // FUNÇÃO: CRIAR SALA
-        async function handleCreate() {
-            userNick = document.getElementById('nick').value;
-            const rName = document.getElementById('room-name').value;
-            const rTime = document.getElementById('room-time').value;
-            
-            if(!userNick || !rName || !rTime) return alert("Preencha tudo!");
-            
             const code = Math.floor(1000 + Math.random() * 9000).toString();
             
-            // Salva no banco de dados
-            localStorage.setItem('arena_role', 'owner');
-            currentRoom = code;
+            // Inicia o Peer com o ID do código
+            peer = new Peer('ARENA-' + code);
             
-            // Inicializa Interface
-            setupArena(code, rName, rTime * 60);
-            startTimer(rTime * 60);
+            peer.on('open', () => {
+                document.getElementById('homeScreen').classList.add('hidden');
+                document.getElementById('arenaScreen').classList.remove('hidden');
+                document.getElementById('dispCode').innerText = code;
+                document.getElementById('dispRoomName').innerText = name;
+                
+                gameState.timeLeft = time * 60;
+                iniciarTimer();
+                atualizarRanking(myNick, 0);
+            });
+
+            // Escuta quem entrar
+            peer.on('connection', (c) => {
+                connections.push(c);
+                c.on('data', (data) => {
+                    if(data.type === 'JOIN') {
+                        gameState.players[data.nick] = 0;
+                        syncTudo();
+                    }
+                    if(data.type === 'FOTO') {
+                        gameState.photos.unshift(data);
+                        gameState.players[data.nick] = (gameState.players[data.nick] || 0) + 200;
+                        syncTudo();
+                    }
+                });
+            });
         }
 
-        // FUNÇÃO: ENTRAR NA SALA
-        function handleJoin() {
-            userNick = document.getElementById('nick').value;
-            const code = document.getElementById('join-code').value;
-            
-            if(!userNick || !code) return alert("Preencha seu nick e o código!");
-            
-            // Aqui simulamos a busca. No Supabase real, faríamos um "select".
-            // Para garantir que funcione para você AGORA, vamos usar o sistema de Broadcast
-            currentRoom = code;
-            setupArena(code, "Arena Conectada", 0);
-            
-            // Simulação de verificação (O erro "não encontrada" vinha do GunJS não achar o nó)
-            // Se o código for igual ao digitado, ele entra direto e aguarda o Sync
-            document.getElementById('screen-menu').classList.add('hidden');
-            document.getElementById('screen-arena').classList.remove('hidden');
+        // 2. ENTRAR NA ARENA
+        function entrarArena() {
+            const code = document.getElementById('joinCode').value;
+            if(!code) return alert("Digite o código!");
+
+            peer = new Peer();
+            peer.on('open', (id) => {
+                conn = peer.connect('ARENA-' + code);
+                
+                conn.on('open', () => {
+                    conn.send({ type: 'JOIN', nick: myNick });
+                    document.getElementById('homeScreen').classList.add('hidden');
+                    document.getElementById('arenaScreen').classList.remove('hidden');
+                    document.getElementById('dispCode').innerText = code;
+                });
+
+                conn.on('data', (data) => {
+                    if(data.type === 'SYNC') {
+                        gameState = data.state;
+                        renderizarArena();
+                    }
+                });
+
+                // Caso demore e não ache a sala
+                setTimeout(() => {
+                    if(document.getElementById('arenaScreen').classList.contains('hidden')) {
+                        alert("Sala não encontrada! Verifique se o criador ainda está online.");
+                        location.reload();
+                    }
+                }, 5000);
+            });
         }
 
-        function setupArena(code, name, time) {
-            document.getElementById('screen-menu').classList.add('hidden');
-            document.getElementById('screen-arena').classList.remove('hidden');
-            document.getElementById('disp-code').innerText = code;
-            document.getElementById('disp-room-name').innerText = name;
-            updateRanking(userNick, 0);
-        }
-
-        function startTimer(seconds) {
-            let t = seconds;
-            const interval = setInterval(() => {
-                t--;
-                const m = Math.floor(t / 60);
-                const s = t % 60;
-                document.getElementById('disp-timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-                if(t <= 0) clearInterval(interval);
-            }, 1000);
-        }
-
-        function handleUpload(input) {
+        // 3. ENVIAR FOTO
+        function enviarFoto(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    addPhotoToFeed(e.target.result, userNick);
-                    // Aqui você somaria os pontos no banco
+                reader.onload = (e) => {
+                    const fotoData = { type: 'FOTO', src: e.target.result, nick: myNick };
+                    
+                    if(conn) { // Se for convidado
+                        conn.send(fotoData);
+                    } else { // Se for o dono
+                        gameState.photos.unshift(fotoData);
+                        gameState.players[myNick] = (gameState.players[myNick] || 0) + 200;
+                        syncTudo();
+                    }
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        function addPhotoToFeed(src, author) {
-            const card = `
-                <div class="bg-[#1a1a1a] border border-zinc-800 rounded-2xl overflow-hidden animate-in zoom-in duration-300">
-                    <img src="${src}" class="w-full aspect-square object-cover">
-                    <div class="p-2 text-center text-[10px] font-bold text-purple-400 uppercase tracking-tighter">${author}</div>
-                </div>
-            `;
-            document.getElementById('feed').insertAdjacentHTML('afterbegin', card);
+        // FUNÇÕES DE SUPORTE
+        function syncTudo() {
+            connections.forEach(c => c.send({ type: 'SYNC', state: gameState }));
+            renderizarArena();
         }
 
-        function updateRanking(nick, pts) {
-            const row = `
-                <div class="p-4 flex justify-between items-center bg-purple-500/5">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-purple-500/50">
-                            <i class="fas fa-user text-xs"></i>
-                        </div>
-                        <span class="font-bold text-sm uppercase">${nick}</span>
-                    </div>
-                    <span class="text-purple-500 font-black">${pts}</span>
+        function renderizarArena() {
+            // Atualizar Fotos
+            const feed = document.getElementById('photoFeed');
+            feed.innerHTML = gameState.photos.map(p => `
+                <div class="photo-card animate-in zoom-in duration-300">
+                    <img src="${p.src}" class="w-full aspect-square object-cover">
+                    <div class="p-2 text-center text-[10px] font-bold text-purple-400 uppercase tracking-tighter">${p.nick}</div>
                 </div>
-            `;
-            document.getElementById('ranking').innerHTML = row;
+            `).join('');
+
+            // Atualizar Ranking
+            const ranking = document.getElementById('rankingList');
+            const sorted = Object.entries(gameState.players).sort((a,b) => b[1] - a[1]);
+            ranking.innerHTML = sorted.map(([nick, pts]) => `
+                <div class="ranking-item ${nick === myNick ? 'bg-purple-500/10 border-l-2 border-purple-500' : ''}">
+                    <span class="font-bold text-sm uppercase">${nick}</span>
+                    <span class="text-purple-400 font-black">${pts}</span>
+                </div>
+            `).join('');
+        }
+
+        function iniciarTimer() {
+            setInterval(() => {
+                if(gameState.timeLeft > 0) {
+                    gameState.timeLeft--;
+                    const m = Math.floor(gameState.timeLeft / 60);
+                    const s = gameState.timeLeft % 60;
+                    document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                    if(!conn) syncTudo(); // Só o dono sincroniza o tempo
+                }
+            }, 1000);
+        }
+
+        function atualizarRanking(nick, pts) {
+            gameState.players[nick] = pts;
+            renderizarArena();
         }
     </script>
 </body>
